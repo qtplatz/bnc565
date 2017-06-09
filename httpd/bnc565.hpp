@@ -33,6 +33,7 @@
 #include <thread>
 #include <vector>
 #include <functional>
+#include <condition_variable>
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/signals2.hpp>
