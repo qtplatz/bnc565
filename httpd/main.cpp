@@ -25,6 +25,7 @@
 
 int __verbose_level__ = 0;
 bool __debug_mode__ = false;
+bool __httpd__ = true;
 
 int
 main(int argc, char* argv[])
@@ -64,43 +65,49 @@ main(int argc, char* argv[])
         dg::bnc565::instance()->initialize( vm[ "tty" ].as< std::string >(), vm[ "baud" ].as<int>() );
         
         if ( vm.count( "query" ) ) {
+            __httpd__ = false;
             dg::bnc565::instance()->peripheral_query_device_data( true );
         }
         if ( vm.count( "reset" ) ) {
+            __httpd__ = false;
             dg::bnc565::instance()->reset();
         }
-        
-#if ! defined WIN32
-        if ( ! __debug_mode__ ) {
-            int fd = open( PID_NAME, O_RDWR|O_CREAT, 0644 );
-            if ( fd < 0 ) {
-                std::cerr << "Can't open " PID_NAME << std::endl;
-                exit(1);
-            }
-            int lock = lockf( fd, F_TLOCK, 0 );
-            if ( lock < 0 ) {
-                std::cerr << "Process " << argv[0] << " already running" << std::endl;
-                exit(1);
-            }
-            std::ostringstream o;
-            o << getpid() << std::endl;
-            write( fd, o.str().c_str(), o.str().size() );
-        }
-#endif        
-        // Initialise the server.
-        dg::log() << boost::format( "started on %1% %2% %3%" )
-            % vm["recv"].as< std::string >()
-            % vm["port"].as< std::string >()
-            % vm["doc_root"].as< std::string >();
 
-        __verbose_level__ = vm["verbose"].as< int >();
+        if ( __httpd__ ) {        
+
+#if ! defined WIN32
+            if ( ! __debug_mode__ ) {
+                int fd = open( PID_NAME, O_RDWR|O_CREAT, 0644 );
+                if ( fd < 0 ) {
+                    std::cerr << "Can't open " PID_NAME << std::endl;
+                    exit(1);
+                }
+                int lock = lockf( fd, F_TLOCK, 0 );
+                if ( lock < 0 ) {
+                    std::cerr << "Process " << argv[0] << " already running" << std::endl;
+                    exit(1);
+                }
+                std::ostringstream o;
+                o << getpid() << std::endl;
+                write( fd, o.str().c_str(), o.str().size() );
+            }
+#endif
+
+            // Initialise the server.
+            dg::log() << boost::format( "started on %1% %2% %3%" )
+                % vm["recv"].as< std::string >()
+                % vm["port"].as< std::string >()
+                % vm["doc_root"].as< std::string >();
             
-        http::server::server s( vm["recv"].as< std::string >().c_str()
-                                , vm["port"].as< std::string >().c_str()
-                                , vm["doc_root"].as< std::string >().c_str() );
-        
-        // Run the server until stopped.
-        s.run();
+            __verbose_level__ = vm["verbose"].as< int >();
+            
+            http::server::server s( vm["recv"].as< std::string >().c_str()
+                                    , vm["port"].as< std::string >().c_str()
+                                    , vm["doc_root"].as< std::string >().c_str() );
+            
+            // Run the server until stopped.
+            s.run();
+        }
         
     }  catch (std::exception& e)  {
         std::cerr << "exception: " << e.what() << "\n";
