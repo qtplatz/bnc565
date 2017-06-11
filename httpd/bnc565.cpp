@@ -1,7 +1,7 @@
 // -*- C++ -*-
 /**************************************************************************
-** Copyright (C) 2010-2016 Toshinobu Hondo, Ph.D.
-** Copyright (C) 2013-2016 MS-Cheminformatics LLC
+** Copyright (C) 2017 Toshinobu Hondo, Ph.D.
+** Copyright (C) 2017 MS-Cheminformatics LLC
 *
 ** Contact: toshi.hondo@scienceliaison.com
 **
@@ -99,13 +99,12 @@ bnc565::bnc565() : fd_( 0 )
                  , deviceType_( NONE )
                  , deviceModelNumber_( 0 )
                  , deviceRevision_( -1 )
+                 , states_( 8 )
 {
-    boost::system::error_code ec;
-
-    timer_.expires_from_now( std::chrono::milliseconds( 1000 ) );
-    timer_.async_wait( [this]( const boost::system::error_code& ec ){ on_timer(ec); } );
-    
-    threads_.push_back( std::thread( [=]{ io_service_.run(); } ) );
+    //boost::system::error_code ec;
+    // timer_.expires_from_now( std::chrono::milliseconds( 1000 ) );
+    // timer_.async_wait( [this]( const boost::system::error_code& ec ){ on_timer(ec); } );
+    // threads_.push_back( std::thread( [=]{ io_service_.run(); } ) );
 }
 
 void
@@ -193,19 +192,6 @@ bnc565::serialDevice() const
     return ttyname_;
 }
 
-// bool
-// bnc565::peripheral_initialize()
-// {
-//     for ( int i = 0; i < 4; ++i ) {
-//         std::string devname = ( boost::format( "/dev/ttyUSB%1%" ) % i ).str();
-//         if ( boost::filesystem::exists( devname ) ) {
-//             if ( initialize( devname ) && reset() )
-//                 return true;
-//         }
-//     }
-//     return false;
-// }
-
 bool
 bnc565::peripheral_terminate()
 {
@@ -225,20 +211,26 @@ bnc565::peripheral_terminate()
 }
 
 bool
-bnc565::peripheral_query_device_data()
+bnc565::peripheral_query_device_data( bool verbose )
 {
     std::lock_guard< std::mutex > lock( xlock_ );
 
     std::string reply;
-    if ( idn_.empty() ) {
-        if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' )
-            idn_ = reply;
+
+    if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' ) { // identify
+        idn_ = reply;
     }
-    if ( inst_full_.empty() ) {
-        if ( _xsend( "INST:FULL?\r\n", reply ) && reply[0] != '?' )
-            inst_full_ = reply;
+
+    if ( verbose )
+        std::cout << "*IDN? : " << reply << std::endl;
+
+    if ( _xsend( ":INST:FULL?\r\n", reply ) && reply[0] != '?' ) {
+        inst_full_ = reply;
     }
     
+    if ( verbose )
+        std::cout << "INST:FULL? : << reply " << std::endl;
+
     // To status (on|off)
     if ( _xsend( ":PULSE0:STATE?\r\n", reply ) ) {
         if ( reply[0] != '?' ) {
@@ -246,11 +238,12 @@ bnc565::peripheral_query_device_data()
                 int value = boost::lexical_cast<int>(reply);
                 state0_ = value;
             } catch ( std::exception& ex ) {
-                // Logger( L"%1% line#%2% exception %3% \"%4%\"", 
-                //         EventLog::pri_INFO, L"0x100" ) % __FILE__ % __LINE__ % ex.what() % reply;
+                log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
             }
         }
     }
+    if ( verbose )
+        std::cout << ":PULSE0:STATE? : " << reply << std::endl;
     
     for ( int i = 0; i < int(states_.size()); ++i ) {
         const char * loc = "";
@@ -270,9 +263,14 @@ bnc565::peripheral_query_device_data()
                 double value = boost::lexical_cast<double>(reply);
                 states_[ i ].delay = value;
             }
+            if ( verbose )
+                std::cout << boost::format( ":PULSE%1%" ) % (i+1)
+                          << boost::format( ", STATE=%1%" ) % states_[ i ].state
+                          << boost::format( ", WIDTH=%1%" ) % states_[ i ].width
+                          << boost::format( ", DELAY=%1%" ) % states_[ i ].delay
+                          << std::endl;
         } catch ( boost::bad_lexical_cast& ex ) {
-            // Logger( L"%1% line#%2% exception %3% \"%4%\" for %5%"
-            //         , EventLog::pri_INFO, L"0x100" ) % __FILE__ % __LINE__ % ex.what() % reply % loc;
+            log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%) %5%" ) % __FILE__ % __LINE__ % ex.what() % reply % loc;
         }
     }
 
@@ -328,15 +326,15 @@ bnc565::_xsend( const char * data, std::string& reply )
             if ( cond_.wait_for( lock, std::chrono::microseconds( 200000 ) ) != std::cv_status::timeout ) {
                 reply_timeout_c_ = 0;
                 if ( que_.empty() ) {
-                    //adportable::debug(__FILE__, __LINE__) << "cond.wait return with empty que"; 
+                    std::cout << "Error: cond.wait return with empty que"; 
                     return false;
                 }
 
                 reply = que_.front();
                 if ( que_.size() > 1 ) {
-                    //adportable::debug(__FILE__, __LINE__) << "got " << que_.size() << " replies";
-                    //for ( const auto& s: que_ )
-                        //adportable::debug(__FILE__, __LINE__) << "\t" << s;
+                    std::cout << "got " << que_.size() << " replies" << std::endl;
+                    for ( const auto& s: que_ )
+                        std::cout << "\t" << s << std::endl;
                 }
                 que_.clear();
                 return true;
@@ -361,14 +359,14 @@ bnc565::_xsend( const char * data, std::string& reply, const std::string& expect
 }
 
 bool
-bnc565::initialize( const std::string& ttyname )
+bnc565::initialize( const std::string& ttyname, int baud )
 {
     xsend_timeout_c_ = 0;
     reply_timeout_c_ = 0;
 
     usb_ = std::make_unique< serialport >( io_service_ );
 
-    if ( ! usb_->open( ttyname.c_str(), 115200 ) ) {
+    if ( ! usb_->open( ttyname.c_str(), baud ) ) {
         return false;
     }
 
@@ -389,7 +387,7 @@ bnc565::initialize( const std::string& ttyname )
         inst_full_ = reply;
     }
 
-    peripheral_query_device_data();
+    peripheral_query_device_data( false );
 
     return true;
 }

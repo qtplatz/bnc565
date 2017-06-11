@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.9)
-project( bnc565d CXX )
+project( bnc565 CXX )
 
 find_package( Boost 1.57 COMPONENTS date_time regex filesystem thread system program_options serialization REQUIRED )
 set( Boost_USE_STATIC_LIBS ON )

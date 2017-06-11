@@ -14,6 +14,7 @@
 
 #include "config.h"
 #include "log.hpp"
+#include "bnc565.hpp"
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
@@ -36,12 +37,16 @@ main(int argc, char* argv[])
         po::options_description desc("options");
         desc.add_options()
             ( "help", "print help message" )
-            ( "version", "print version number" )            
+            ( "version", "print version number" )
+            ( "tty",  po::value<std::string>()->default_value("/dev/ttyUSB0"), "tty device name" )
+            ( "baud", po::value<int>()->default_value(4800), "baud rate" )
             ( "port", po::value<std::string>()->default_value("8080"), "http port number" )
             ( "recv", po::value<std::string>()->default_value("0.0.0.0"), "For IPv4, try 0.0.0.0, IPv6, try 0::0" )
             ( "doc_root", po::value<std::string>()->default_value( DOC_ROOT ), "document root" )
             ( "verbose", po::value<int>()->default_value(0), "verbose level" )
-            ( "debug,d", "debug mode" )            
+            ( "debug,d", "debug mode" )
+            ( "query,q", "query device" )
+            ( "reset",   "reset digitizer" )
             ;
         po::store( po::command_line_parser( argc, argv ).options( desc ).run(), vm );
         po::notify( vm );
@@ -55,6 +60,15 @@ main(int argc, char* argv[])
         }
 
         __debug_mode__ = vm.count( "debug" ) > 0 ;
+
+        dg::bnc565::instance()->initialize( vm[ "tty" ].as< std::string >(), vm[ "baud" ].as<int>() );
+        
+        if ( vm.count( "query" ) ) {
+            dg::bnc565::instance()->peripheral_query_device_data( true );
+        }
+        if ( vm.count( "reset" ) ) {
+            dg::bnc565::instance()->reset();
+        }
         
 #if ! defined WIN32
         if ( ! __debug_mode__ ) {

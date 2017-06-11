@@ -79,7 +79,7 @@ namespace dg {
 
         //bool peripheral_initialize();
         bool peripheral_terminate();
-        bool peripheral_query_device_data();
+        bool peripheral_query_device_data( bool verbose = false );
 
         struct Channel {
             bool state;
@@ -109,6 +109,8 @@ namespace dg {
         bool state0() const { return state0_; }
 
         bool xsend( const char * data, std::string& );
+        bool initialize( const std::string&, int baud );
+        bool reset();
         
     private:
         DeviceType deviceType_;
@@ -141,8 +143,6 @@ namespace dg {
         bool _xsend( const char * data, std::string& );
         bool _xsend( const char * data, std::string&, const std::string& expect, size_t ntry );
         void handle_receive( const char * data, std::size_t length );
-        bool initialize( const std::string& );
-        bool reset();
     };
 }
 
