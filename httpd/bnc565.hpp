@@ -63,7 +63,7 @@ namespace dg {
 
         boost::signals2::connection register_handler( const tick_handler_t::slot_type& );
 
-        uint32_t revision_number() const;
+        const std::string& idn() const;
 
         void commit( const dg::protocols<>& );
 
@@ -75,28 +75,28 @@ namespace dg {
         bool peripheral_terminate();
         bool peripheral_query_device_data( bool verbose = false );
 
-        struct Channel {
-            bool state;
-            double width;
-            double delay;
-        };
+        // struct Channel {
+        //     bool state;
+        //     double width;
+        //     double delay;
+        // };
 
-        struct DelaySetpoint {
-            bool state;
-            double width; // s
-            double delay; // s
-            uint8_t channel;
-            std::string name;
-            DelaySetpoint() : state(false), width(0), delay(0), channel(0) {}
-            DelaySetpoint( const char * _name ) : state(false), width(0), delay(0), channel(0), name(_name) {
-            }
-            DelaySetpoint( const DelaySetpoint& t ) : state(t.state), width(t.width)
-                                                    , delay(t.width), channel(t.channel)
-                                                    , name(t.name) {
-            }
-        };
+        // struct DelaySetpoint {
+        //     bool state;
+        //     double width; // s
+        //     double delay; // s
+        //     uint8_t channel;
+        //     std::string name;
+        //     DelaySetpoint() : state(false), width(0), delay(0), channel(0) {}
+        //     DelaySetpoint( const char * _name ) : state(false), width(0), delay(0), channel(0), name(_name) {
+        //     }
+        //     DelaySetpoint( const DelaySetpoint& t ) : state(t.state), width(t.width)
+        //                                             , delay(t.width), channel(t.channel)
+        //                                             , name(t.name) {
+        //     }
+        // };
 
-        const std::vector<Channel>& state() const { return states_; };
+        // const std::vector<Channel>& state() const { return states_; };
 
         void setInterval( double );
         double interval() const { return interval0_; }
@@ -113,17 +113,13 @@ namespace dg {
         boost::asio::io_service io_service_;
         boost::asio::steady_timer timer_; // interrupts simulator
         std::vector< std::thread > threads_;
-        int deviceModelNumber_;
-        int deviceRevision_;
         void on_timer( const boost::system::error_code& ec );
         //
-        std::vector<Channel> states_;
-        std::vector< DelaySetpoint > setpts_;
+        //std::vector<Channel> states_;
+        //std::vector< DelaySetpoint > setpts_;
         double interval0_;
         bool state0_;
         std::unique_ptr< serialport > usb_;
-        std::string idn_;
-        std::string inst_full_;
         std::condition_variable cond_;
         std::mutex mutex_;
         std::mutex xlock_;

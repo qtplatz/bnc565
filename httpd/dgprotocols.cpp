@@ -59,9 +59,11 @@ namespace dg {
         try {
             boost::property_tree::read_json( json, pt );
 
+            if ( auto state = pt.get_optional< int >( "protocols.state" ) )
+                protocols.state_ = state.get();
+            
             if ( auto interval = pt.get_optional< double >( "protocols.interval" ) )
-                protocols.interval_ = interval.get() / std::micro::den; // us -> seconds
-            // protocols.interval_ = std::stod( pt.get_child( "protocols.interval" ).data() ) * 1.0e-6; // us -> seconds
+                protocols.interval_ = interval.get() / std::micro::den; // us
                 
             for ( const auto& v : pt.get_child( "protocols.protocol" ) ) {
 
@@ -72,19 +74,19 @@ namespace dg {
 
                 size_t ch(0);
                 for ( const auto& pulse: v.second.get_child( "pulses" ) ) {
-                    auto v = std::make_tuple( 0, 0, false );
+                    auto v = std::make_tuple( 0, 0, false, 1 );
                     if ( ch < protocol<>::size ) {
                         if ( auto delay = pulse.second.get_optional< double >( "delay" ) )
-                            std::get< 0 >( v ) = delay.value();
+                            std::get< dg::pulse_delay >( v ) = delay.value() / std::micro::den;
                         if ( auto width = pulse.second.get_optional< double >( "width" ) )
-                            std::get< 1 >( v ) = width.value();
-                        if ( auto inv = pulse.second.get_optional< bool >( "inv" ) )
-                            std::get< 2 >( v ) = inv.value();
+                            std::get< dg::pulse_width >( v ) = width.value() / std::micro::den;
+                        if ( auto pol = pulse.second.get_optional< std::string >( "polarity" ) )
+                            std::get< dg::pulse_polarity >( v ) = "NORM";
+                        if ( auto state = pulse.second.get_optional< bool >( "state" ) )
+                            std::get< dg::pulse_state >( v ) = state.value();                        
                         data[ int(ch) ] = v;
                     }
                     ++ch;
-                    std::cout << __FILE__ << __LINE__ << "----- ch : " << ch << " delay: "
-                              << std::get<0>(v) << " width: " << std::get<1>(v) << " inv=" << std::get<2>(v) << std::endl;
                 }
                 protocols.protocols_.emplace_back( data );
             }
@@ -108,7 +110,8 @@ namespace dg {
         pt.put( "idn", protocols.idn() );
         pt.put( "inst_full", protocols.full() );
     
-        pt.put( "protocols.interval", protocols.interval_ ); // seconds --> us
+        pt.put( "protocols.interval", ( boost::format( "%g" ) % ( protocols.interval_ * std::micro::den ) ).str() ); // seconds --> us
+        pt.put( "protocols.state", protocols.state_ );
     
         boost::property_tree::ptree pv;
     
@@ -125,9 +128,10 @@ namespace dg {
             for ( const auto& pulse: protocol.pulses() ) {
                 boost::property_tree::ptree xpulse;
 
-                xpulse.put( "delay", ( boost::format( "%g" ) % ( std::get<0>(pulse) * std::micro::den ) ).str() );
-                xpulse.put( "width", ( boost::format( "%g" ) % ( std::get<1>(pulse) * std::micro::den ) ).str() );
-                xpulse.put( "inv", std::get<2>(pulse) );
+                xpulse.put( "delay", ( boost::format( "%g" ) % ( std::get<dg::pulse_delay>(pulse) * std::micro::den ) ).str() );
+                xpulse.put( "width", ( boost::format( "%g" ) % ( std::get<dg::pulse_width>(pulse) * std::micro::den ) ).str() );
+                xpulse.put( "polarity", std::get<dg::pulse_polarity>(pulse) );
+                xpulse.put( "state", std::get<dg::pulse_state>(pulse) );
                 
                 xpulses.push_back( std::make_pair( "", xpulse ) );
             }

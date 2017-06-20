@@ -197,7 +197,7 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
 
     } else if ( request_path == "/dg/ctl?banner" ) {
 
-        o << "<h2>BNC 565 V" << PACKAGE_VERSION " Rev. " << bnc565::instance()->revision_number() << "</h2>";
+        o << "<h2>BNC 565 V" << PACKAGE_VERSION " Rev. " << bnc565::instance()->idn() << "</h2>";
         rep += o.str();
 
     } else if ( request_path.compare( 0, 20, "/dg/ctl?commit.json=", 20 ) == 0 ) {

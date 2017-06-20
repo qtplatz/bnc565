@@ -55,8 +55,11 @@ namespace dg {
         const protocol_type& operator [] ( int idx ) const {
             return protocols_[ idx ];
         }
-        // protocol& operator [] ( int idx );
-        
+
+        protocol_type& operator [] ( int idx ) {
+            return protocols_[ idx ];
+        }        
+
         const size_t size() const {
             return protocols_.size();
         }

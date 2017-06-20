@@ -27,34 +27,56 @@
       <img src="/logo-osaka-u.png" alt="Smiley face" height="31" width="280">
       <div id="banner"><h2>BNC565 $Id: 8ccd234fe26ec605e9b97d49e0b6d7fb2e10f094 $</h2></div>
     </header>
-    
+
     <section>
-      <div class="container">
-	<div class="col-xs-2" id="commit">
-	  <input type="submit" id="button-commit" value="Commit" class="btn btn-primary btn-lg">
-	</div>
-	<div class="col-xs-2" id="fetch">
-	  <input type="submit" id="button-fetch" value="Fetch" class="btn btn-primary btn-lg">
-	</div>
-	<div class="col-xs-4">
-	  <div>
-	    Tick count:
-	    <div id="tick" style="display: inline"></div>
+      <section>
+	<div class="container">
+	  <div class = "row" >
+	    <div class="col-xs-4">
+	      <input class="mych" type="checkbox" id="switch-connect"
+		     data-toggle="toggle" data-onstyle="success" data-offstyle="info"/>
+	    </div>
+	    <div class="col-xs-4" id="commit">
+	      <input type="submit" id="button-commit" value="Commit" class="btn btn-primary btn-md">
+	    </div>
+
+	    <div class="col-xs-4" id="fetch">
+	      <input type="submit" id="button-fetch" value="Fetch" class="btn btn-primary btn-md">
+	    </div>
+	    
 	  </div>
-	  <div id="interval">
-	    T<sub>0</sub>:
-	    <input type="number" id="interval" min=500 max=1000000 step=500 value=1000></input>
-	  </div>
+	</div>
+      </section>
+    </section>      
+    <section>
+      <div class="col-xs-4">	    
+	<div class="tick-value">      
+	  Tick count: <div id="tick" style="display: inline"></div>
+	</div>
+      </div>
+      <div class="col-xs-4">
+	<div id="interval">
+	  T<sub>0</sub>:
+	  <input type="number" id="interval" min=500 max=1000000 step=500 value=1000></input>
 	</div>
       </div>
     </section>
 
     <hr/>
 
+    <!-- Channels Table -->
     <section>
       <div class="container">
 	<div class="col-sm-12" id="p[0]" data-index="0"></div>
       </div>      
+    </section>
+    <!-- End Channels Table -->
+    
+    <section>
+      <form id="malpix-crylas-cmdline">
+	Command: <input type="textbox" id="cmdtext" value="DB0"/>
+	<button type="submit" value="Submit" class="btn bun-default" id="submit" data-size="mini">Submit</button>
+      </form>	
     </section>
     
     <footer>

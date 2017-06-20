@@ -30,6 +30,10 @@
 
 namespace dg {
 
+    typedef std::tuple< double, double, std::string, int > delay_pulse_type;
+
+    enum { pulse_delay, pulse_width, pulse_polarity, pulse_state };
+
     size_t constexpr delay_pulse_count = 8;
 
     template< size_t _size = delay_pulse_count >
@@ -42,19 +46,24 @@ namespace dg {
         protocol( const protocol& t ) : pulses_( t.pulses_ ) {
         }
 
-        std::tuple< double, double, bool >& operator []( int index ) {
+        delay_pulse_type& operator []( int index ) {
             return pulses_ [ index ];
         }
             
-        const std::tuple< double, double, bool >& operator []( int index ) const {
+        const delay_pulse_type& operator []( int index ) const {
             return pulses_ [ index ];
         }
 
-        const std::array< std::tuple< double, double, bool >, size >& pulses() const {
+        const std::array< delay_pulse_type, size >& pulses() const {
             return pulses_;
         }
-            
+
+        double& delay( int ch )         { return std::get< pulse_delay > ( pulses_[ ch ] ); }
+        double& width( int ch )         { return std::get< pulse_width > ( pulses_[ ch ] ); }
+        std::string& polarity( int ch ) { return std::get< pulse_polarity > ( pulses_[ ch ] ); }
+        int& state( int ch )            { return std::get< pulse_state > ( pulses_[ ch ] ); }
+        
     private:
-        std::array< std::tuple< double, double, bool >, _size > pulses_;  // delay, width, inv = true
+        std::array< delay_pulse_type, _size > pulses_;  // delay, width, inv, state
     };
 }

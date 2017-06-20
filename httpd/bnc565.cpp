@@ -96,9 +96,6 @@ bnc565::~bnc565()
 bnc565::bnc565() : timer_( io_service_ )
                  , tick_( 0 )
                  , deviceType_( NONE )
-                 , deviceModelNumber_( 0 )
-                 , deviceRevision_( -1 )
-                 , states_( 8 )
 {
     boost::system::error_code ec;
     timer_.expires_from_now( std::chrono::milliseconds( 1000 ) );
@@ -143,19 +140,17 @@ bnc565::commit( const dg::protocols<>& d )
         const auto& p = *d.begin();
         std::string reply;
         
-        for ( int ch  = 1; ch <= p.size; ++ch ) {
+        for ( int ch = 1; ch <= p.size; ++ch ) {
 
             const auto& v = p[ ch - 1 ];
             
             _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
             
-            if ( std::get< 2 >( v ) )
-                _xsend( (boost::format(":PULSE%1%:POL INV\r\n") % ch).str().c_str(), reply, "ok", 10 );
-            else
-                _xsend( (boost::format(":PULSE%1%:POL NORM\r\n") % ch).str().c_str(), reply, "ok", 10 );
+            _xsend( (boost::format(":PULSE%1%:POL %2%\r\n") % ch % std::get< dg::pulse_polarity>( v ) ).str().c_str(), reply, "ok", 10 );
+            
+            _xsend( (boost::format(":PULSE%1%:DELAY %E\r\n") % ch % std::get< dg::pulse_delay >( v ) ).str().c_str(), reply, "ok", 10 );
 
-            _xsend( (boost::format(":PULSE%1%:DELAY %E\r\n") % ch % std::get< 0 >( v ) ).str().c_str(), reply, "ok", 10 );
-            _xsend( (boost::format(":PULSE%1%:WIDTH %E\r\n") % ch % std::get< 1 >( v ) ).str().c_str(), reply, "ok", 10 );
+            _xsend( (boost::format(":PULSE%1%:WIDTH %E\r\n") % ch % std::get< dg::pulse_width >( v ) ).str().c_str(), reply, "ok", 10 );
             
         }
         _xsend( ":SYST:KLOCK OFF\r\n", reply, "ok", 10 );  // off keypad lock
@@ -188,20 +183,20 @@ bnc565::fetch( dg::protocols<>& d )
 
         auto& protocol = *d.begin();
     
-        for ( int i = 0; i < int(states_.size()); ++i ) {
+        for ( size_t ch = 0; ch < protocol.size; ++ch ) {
             try {
-                if ( _xsend( ( boost::format( ":PULSE%1%:STATE?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
-                    int value = boost::lexical_cast<int>(reply);
-                    std::get< 2 >( protocol[ i ] ) = ( std::get< 2 >( protocol[ i ] ) & 0xffff0000 ) | ( value << 16 );
+                if ( _xsend( ( boost::format( ":PULSE%1%:STATE?\r\n" ) % (ch+1) ).str().c_str(), reply ) ) {
+                    protocol.state( ch ) = boost::lexical_cast<int>(reply);
                 }
-                if ( _xsend( ( boost::format( ":PULSE%1%:WIDTH?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
-                    double value = boost::lexical_cast<double>(reply);
-                    std::get< 1 >( protocol[ i ] ) = value;
+                if ( _xsend( ( boost::format( ":PULSE%1%:WIDTH?\r\n" ) % (ch+1) ).str().c_str(), reply ) ) {
+                    protocol.width( ch ) = boost::lexical_cast<double>(reply); // seconds
                 }
-                if ( _xsend( ( boost::format( ":PULSE%1%:DELAY?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
-                    double value = boost::lexical_cast<double>(reply);
-                    std::get< 0 >( protocol[ i ] ) = value;
+                if ( _xsend( ( boost::format( ":PULSE%1%:DELAY?\r\n" ) % (ch+1) ).str().c_str(), reply ) ) {
+                    protocol.delay( ch ) = boost::lexical_cast<double>(reply); // seconds
                 }
+                if ( _xsend( ( boost::format( ":PULSE%1%:POL?\r\n" ) % (ch+1) ).str().c_str(), reply ) ) {
+                    protocol.polarity( ch ) = reply; // 'NORM' | 'INV'
+                }                
             } catch ( boost::bad_lexical_cast& ex ) {
                 log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
             }
@@ -222,10 +217,10 @@ bnc565::fetch( dg::protocols<>& d )
     return true;
 }
 
-uint32_t
-bnc565::revision_number() const
+const std::string&
+bnc565::idn() const
 {
-    return deviceRevision_;
+    return protocols_.idn();
 }
 
 const std::string&
@@ -260,7 +255,6 @@ bnc565::peripheral_query_device_data( bool verbose )
     std::string reply;
 
     if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' ) { // identify
-        idn_ = reply;
         protocols_.setIdn( reply );
     }
 
@@ -268,7 +262,6 @@ bnc565::peripheral_query_device_data( bool verbose )
         std::cout << "*IDN? : " << reply << std::endl;
 
     if ( _xsend( ":INST:FULL?\r\n", reply ) && reply[0] != '?' ) {
-        inst_full_ = reply;
         protocols_.setFull( reply );
     }
     
@@ -292,32 +285,32 @@ bnc565::peripheral_query_device_data( bool verbose )
 
     auto& protocol = *protocols_.begin();
     
-    for ( int i = 0; i < int(states_.size()); ++i ) {
+    for ( int i = 0; i < protocol.size; ++i ) {
         const char * loc = "";
         try {
             if ( _xsend( ( boost::format( ":PULSE%1%:STATE?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "STATE";
-                int value = boost::lexical_cast<int>(reply);
-                states_[ i ].state = value;
-                std::get< 2 >( protocol[ i ] ) = ( std::get< 2 >( protocol[ i ] ) & 0xffff0000 ) | ( value << 16 );
+                protocol.state( i ) = boost::lexical_cast<int>(reply);
             }
             if ( _xsend( ( boost::format( ":PULSE%1%:WIDTH?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "WIDTH";
-                double value = boost::lexical_cast<double>(reply);
-                states_[ i ].width = value;
-                std::get< 1 >( protocol[ i ] ) = value;
+                protocol.width( i ) = boost::lexical_cast<double>(reply);
             }
             if ( _xsend( ( boost::format( ":PULSE%1%:DELAY?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "DELAY";
-                double value = boost::lexical_cast<double>(reply);
-                states_[ i ].delay = value;
-                std::get< 0 >( protocol[ i ] ) = value;
+                protocol.delay( i ) = boost::lexical_cast<double>(reply);
             }
+            if ( _xsend( ( boost::format( ":PULSE%1%:POL?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
+                loc = "POL";
+                protocol.polarity( i ) = reply;
+            }
+            
             if ( verbose )
                 std::cout << boost::format( ":PULSE%1%" ) % (i+1)
-                          << boost::format( ", STATE=%1%" ) % states_[ i ].state
-                          << boost::format( ", WIDTH=%1%" ) % states_[ i ].width
-                          << boost::format( ", DELAY=%1%" ) % states_[ i ].delay
+                          << boost::format( ", STATE=%1%" ) % protocol.state( i )
+                          << boost::format( ", WIDTH=%1%" ) % protocol.width( i )
+                          << boost::format( ", DELAY=%1%" ) % protocol.delay( i )
+                          << boost::format( ", POL=%1%" ) % protocol.polarity( i )
                           << std::endl;
         } catch ( boost::bad_lexical_cast& ex ) {
             log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%) %5%" ) % __FILE__ % __LINE__ % ex.what() % reply % loc;
@@ -437,11 +430,11 @@ bnc565::initialize( const std::string& ttyname, int baud )
     std::string reply;
 
     if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' ) { // identify
-        idn_ = reply;
+        protocols_.setIdn( reply );
     }
 
     if ( _xsend( ":INST:FULL?\r\n", reply ) && reply[0] != '?' ) {
-        inst_full_ = reply;
+        protocols_.setFull( reply );
     }
 
     peripheral_query_device_data( false );
