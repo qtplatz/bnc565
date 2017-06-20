@@ -463,9 +463,10 @@ bnc565::reset()
 
         for ( int ch  = 1; ch <= 8; ++ch ) {
             
-            _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
+            _xsend( (boost::format(":PULSE%1%:WIDTH %2%\r\n") % ch % 1.0e-6).str().c_str(), reply, "ok", 10 );
+            _xsend( (boost::format(":PULSE%1%:DELAY %2%\r\n") % ch % (ch * 1.0e-5)).str().c_str(), reply, "ok", 10 );
             _xsend( (boost::format(":PULSE%1%:POL NORM\r\n") % ch).str().c_str(), reply, "ok", 10 );
-
+            _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
         }
         
         if ( _xsend( ":PULSE5:SYNC CHA\r\n", reply, "ok", 10 ) &&
