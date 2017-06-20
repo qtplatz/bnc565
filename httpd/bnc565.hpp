@@ -59,13 +59,6 @@ namespace dg {
         void setPulse( uint32_t channel, const std::pair< double, double >& );
         std::pair<double, double> pulse( uint32_t channel ) const;
         
-        //double interval() const;
-        
-        //void commit();
-        //void activate_trigger();
-        //void deactivate_trigger();
-        //uint32_t trigger() const;
-
         typedef boost::signals2::signal< void( size_t ) > tick_handler_t;
 
         boost::signals2::connection register_handler( const tick_handler_t::slot_type& );
@@ -73,7 +66,8 @@ namespace dg {
         uint32_t revision_number() const;
 
         void commit( const dg::protocols<>& );
-        bool fetch( dg::protocols<>& ) const;
+
+        bool fetch( dg::protocols<>& );
 
         inline boost::asio::io_service& io_service() { return io_service_; }
 
@@ -114,7 +108,6 @@ namespace dg {
         
     private:
         DeviceType deviceType_;
-        int fd_;
         size_t tick_;
         tick_handler_t handler_; // tick handler
         boost::asio::io_service io_service_;
@@ -139,6 +132,8 @@ namespace dg {
         std::string ttyname_;
         std::atomic< size_t > xsend_timeout_c_;
         std::atomic< size_t > reply_timeout_c_;
+
+        dg::protocols<> protocols_;
 
         bool _xsend( const char * data, std::string& );
         bool _xsend( const char * data, std::string&, const std::string& expect, size_t ntry );

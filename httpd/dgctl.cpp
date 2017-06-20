@@ -1,7 +1,7 @@
 // -*- C++ -*-
 /**************************************************************************
-** Copyright (C) 2010-2011 Toshinobu Hondo, Ph.D.
-** Copyright (C) 2013-2015 MS-Cheminformatics LLC
+** Copyright (C) 2010-2017 Toshinobu Hondo, Ph.D.
+** Copyright (C) 2013-2017 MS-Cheminformatics LLC
 *
 ** Contact: toshi.hondo@scienceliaison.com
 **
@@ -29,10 +29,11 @@
 #include "log.hpp"
 #include "pugixml.hpp"
 #include "dgprotocols.hpp"
-#include <sstream>
-#include <iostream>
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
+#include <sstream>
+#include <iostream>
+#include <fstream>
 
 namespace dg {
 
@@ -183,48 +184,20 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
 {
     std::ostringstream o;
 
+    std::cout << __FILE__ << __LINE__ << "http_request: " << method << " : " << request_path << std::endl;
+
     if ( request_path == "/dg/ctl?status.json" ) {
 
         dg::protocols<> p;
         if ( bnc565::instance()->fetch( p ) ) {
             if ( dg::protocols<>::write_json( o, p ) )
-                rep += o.str();                
+                rep += o.str();
+            //dg::protocols<>::write_json( std::cout, p );
         }
-
-    } else if ( request_path == "/dg/ctl?status" ) {
-        update();
-        pugi::xml_document dom;
-        auto decl = dom.prepend_child( pugi::node_declaration );
-        decl.append_attribute( "version" ) = "1.0";
-        decl.append_attribute( "encoding" ) = "UTF-8";
-        //decl.append_attribute( "standalone" ) = "no";
-
-        if ( auto doc = dom.append_child( "dgstatus" ) ) {
-            doc.append_attribute( "version" ) = "1.0";
-            
-            if ( auto node = doc.append_child( "interval" ) )
-                node.append_attribute( "value" ) = time::scale_to_ms( pulser_interval() ); // microseconds
-
-            std::cerr << boost::format( "http_request status: interval=%1%" ) % pulser_interval() << std::endl;
-
-            for ( size_t idx = 0; idx < pulses_.size(); ++idx ) {
-                auto& value = pulses_ [ idx ];
-                if ( auto node = doc.append_child( "pulse" ) ) {
-
-                    node.append_attribute( "ch" ) = static_cast<unsigned int>( idx );
-                    node.append_attribute( "delay" ) = time::scale_to_ms( value.first ); // microseconds
-                    node.append_attribute( "width" ) = time::scale_to_ms( value.second );
-
-                }
-            }
-        }
-
-        dom.save( o );
-        rep += o.str();
 
     } else if ( request_path == "/dg/ctl?banner" ) {
 
-        o << "<h2>Delay Generator V" << PACKAGE_VERSION " Rev. " << bnc565::instance()->revision_number() << "</h2>";
+        o << "<h2>BNC 565 V" << PACKAGE_VERSION " Rev. " << bnc565::instance()->revision_number() << "</h2>";
         rep += o.str();
 
     } else if ( request_path.compare( 0, 20, "/dg/ctl?commit.json=", 20 ) == 0 ) {
@@ -235,46 +208,14 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         try {
             if ( dg::protocols<>::read_json( payload, protocols ) ) {
 
+                dg::protocols<>::write_json( std::cout, protocols );
+
                 bnc565::instance()->commit( protocols );
                 o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );
                 rep = o.str();
             }
         } catch ( std::exception& e ) {
             log() << boost::diagnostic_information( e );
-        }
-
-    } else if ( request_path.compare( 0, 15, "/dg/ctl?commit=", 15 ) == 0 ) {
-
-        std::string payload = request_path.substr( 15 );
-        pugi::xml_document dom;
-        if ( auto result = dom.load_string( payload.c_str() ) ) {
-
-            dom.save( o );
-            // std::cerr << o.str();
-
-            if ( auto node = dom.select_single_node( "/dgcommit/interval" ) ) {
-                double value = node.node().attribute( "value" ).as_double();
-                pulser_interval_ = value * 1.0e-6;
-                //----------------------
-                //std::cerr << boost::format( "pulser_interval = %1%" ) % pulser_interval_ << std::endl;
-            }
-
-            auto nodes = dom.select_nodes( "/dgcommit/pulse" );
-            for ( auto& node : nodes ) {
-                uint32_t ch = node.node().attribute( "ch" ).as_uint();
-                if ( ch < pulses_.size() ) {
-                    double delay = node.node().attribute( "delay" ).as_double();
-                    double width = node.node().attribute( "width" ).as_double();
-                    pulses_ [ ch ] = std::make_pair( delay * 1.0e-6, width * 1.0e-6 );
-                    //----------------------
-                    //std::cerr << boost::format( "ch[%1%] delay=%2% width=%3%" ) % ch % delay % width << std::endl;
-                }
-            }
-            commit();
-            o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );
-            rep = o.str();
-        } else {
-            rep = std::string( "ERROR: " ) + result.description();
         }
 
     } else if ( request_path == "/dg/ctl?fsm=start" ) {

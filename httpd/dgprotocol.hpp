@@ -26,46 +26,35 @@
 #pragma once
 
 #include <array>
+#include <tuple>
 
 namespace dg {
 
-    size_t constexpr delay_pulse_count = 6;
+    size_t constexpr delay_pulse_count = 8;
 
-    // CH0 (push), CH1(INJ), CH2(EXIT), CH3(GATE 0), CH4(GATE 1), CH5(ADC delay)
-        
     template< size_t _size = delay_pulse_count >
     class protocol {
     public:
         static size_t constexpr size = _size;
 
-        protocol() : replicates_( -1 ) {}
+        protocol() {}
             
-        protocol( const protocol& t ) : replicates_( t.replicates_ )
-                                      , pulses_( t.pulses_ ) {
+        protocol( const protocol& t ) : pulses_( t.pulses_ ) {
         }
 
-        size_t replicates() const {
-            return replicates_;
-        }
-            
-        void setReplicates( size_t v ) {
-            replicates_ = v;
-        }
-            
-        std::pair< double, double >& operator []( int index ) {
+        std::tuple< double, double, bool >& operator []( int index ) {
             return pulses_ [ index ];
         }
             
-        const std::pair< double, double >& operator []( int index ) const {
+        const std::tuple< double, double, bool >& operator []( int index ) const {
             return pulses_ [ index ];
         }
 
-        const std::array< std::pair< double, double >, size >& pulses() const {
+        const std::array< std::tuple< double, double, bool >, size >& pulses() const {
             return pulses_;
         }
             
     private:
-        size_t replicates_;
-        std::array< std::pair< double, double >, _size > pulses_;
+        std::array< std::tuple< double, double, bool >, _size > pulses_;  // delay, width, inv = true
     };
 }

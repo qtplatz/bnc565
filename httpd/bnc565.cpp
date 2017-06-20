@@ -78,7 +78,7 @@ bnc565::instance()
 
 bnc565::operator bool () const
 {
-    return true;
+    return usb_->is_open();
 }
 
 bnc565::~bnc565()
@@ -93,18 +93,18 @@ bnc565::~bnc565()
     log() << "memmap closed";
 }
 
-bnc565::bnc565() : fd_( 0 )
-                 , timer_( io_service_ )
+bnc565::bnc565() : timer_( io_service_ )
                  , tick_( 0 )
                  , deviceType_( NONE )
                  , deviceModelNumber_( 0 )
                  , deviceRevision_( -1 )
                  , states_( 8 )
 {
-    //boost::system::error_code ec;
-    // timer_.expires_from_now( std::chrono::milliseconds( 1000 ) );
-    // timer_.async_wait( [this]( const boost::system::error_code& ec ){ on_timer(ec); } );
-    // threads_.push_back( std::thread( [=]{ io_service_.run(); } ) );
+    boost::system::error_code ec;
+    timer_.expires_from_now( std::chrono::milliseconds( 1000 ) );
+    timer_.async_wait( [this]( const boost::system::error_code& ec ){ on_timer(ec); } );
+
+    threads_.push_back( std::thread( [=]{ io_service_.run(); } ) );
 }
 
 void
@@ -127,56 +127,98 @@ bnc565::register_handler( const tick_handler_t::slot_type & subscriber )
 std::pair<double, double>
 bnc565::pulse( uint32_t channel ) const
 {
-    // if ( channel < constants::pulse_addrs.size() && mapped_ptr_ ) {
-
-    //     auto& lhs = constants::pulse_addrs[ channel ];
-
-    //     uint32_t delay = mapped_ptr_[ lhs.first  ];
-    //     uint32_t width = mapped_ptr_[ lhs.second ] - delay;
-
-    //     if ( __verbose_level__ >= log::INFO ) {                
-    //         log() << boost::format( "actual pulse[0x%08x] = %8d, [0x%08x] = %8d" )
-    //             % ( lhs.first * sizeof(int32_t) ) % delay
-    //             % ( lhs.second * sizeof(int32_t ) ) % ( delay + width );
-    //     }
-
-    //     return std::make_pair( device_to_seconds(delay), device_to_seconds( width ) );
-    // }
     return std::make_pair(0, 0);
 }
 
 void
 bnc565::setPulse( uint32_t channel, const std::pair<double, double>& t )
 {
-    // if ( dgmod_ == 0 ) {
-    
-    //     if ( channel < constants::pulse_addrs.size() && mapped_ptr_ ) {
-
-    //         uint32_t delay = seconds_to_device( t.first );
-    //         uint32_t width = seconds_to_device( t.second );
-
-    //         auto& lhs = constants::pulse_addrs[ channel ];
-
-    //         mapped_ptr_[ lhs.first  ] = delay;
-    //         mapped_ptr_[ lhs.second ] = delay + width;
-
-    //         if ( __verbose_level__ >= log::INFO ) {
-    //             log() << boost::format( "pulse[0x%08x] := %8d, [0x%08x] := %8d" )
-    //                 % ( lhs.first * sizeof(int32_t) ) % delay
-    //                 % ( lhs.second * sizeof(int32_t ) ) % ( delay + width );
-    //         }
-    //     }
-    // }
 }
 
 void
-bnc565::commit( const dg::protocols<>& )
+bnc565::commit( const dg::protocols<>& d )
 {
+    if ( usb_->is_open() ) {
+
+        const auto& p = *d.begin();
+        std::string reply;
+        
+        for ( int ch  = 1; ch <= p.size; ++ch ) {
+
+            const auto& v = p[ ch - 1 ];
+            
+            _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
+            
+            if ( std::get< 2 >( v ) )
+                _xsend( (boost::format(":PULSE%1%:POL INV\r\n") % ch).str().c_str(), reply, "ok", 10 );
+            else
+                _xsend( (boost::format(":PULSE%1%:POL NORM\r\n") % ch).str().c_str(), reply, "ok", 10 );
+
+            _xsend( (boost::format(":PULSE%1%:DELAY %E\r\n") % ch % std::get< 0 >( v ) ).str().c_str(), reply, "ok", 10 );
+            _xsend( (boost::format(":PULSE%1%:WIDTH %E\r\n") % ch % std::get< 1 >( v ) ).str().c_str(), reply, "ok", 10 );
+            
+        }
+        _xsend( ":SYST:KLOCK OFF\r\n", reply, "ok", 10 );  // off keypad lock
+        _xsend( ":PULSE0:STATE ON\r\n", reply, "ok", 10 ); // start trigger        
+        
+    }
 }
 
 bool
-bnc565::fetch( dg::protocols<>& ) const
+bnc565::fetch( dg::protocols<>& d )
 {
+    if ( usb_->is_open() ) {
+        std::string reply;
+
+        if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' ) // identify
+            d.setIdn( reply );
+        
+        if ( _xsend( ":INST:FULL?\r\n", reply ) && reply[0] != '?' )
+            d.setFull( reply );
+        
+        if ( _xsend( ":PULSE0:STATE?\r\n", reply ) ) {
+            if ( reply[0] != '?' ) {
+                try {
+                    d.setState( boost::lexical_cast<int>(reply) );
+                } catch ( std::exception& ex ) {
+                    log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
+                }
+            }
+        }
+
+        auto& protocol = *d.begin();
+    
+        for ( int i = 0; i < int(states_.size()); ++i ) {
+            try {
+                if ( _xsend( ( boost::format( ":PULSE%1%:STATE?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
+                    int value = boost::lexical_cast<int>(reply);
+                    std::get< 2 >( protocol[ i ] ) = ( std::get< 2 >( protocol[ i ] ) & 0xffff0000 ) | ( value << 16 );
+                }
+                if ( _xsend( ( boost::format( ":PULSE%1%:WIDTH?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
+                    double value = boost::lexical_cast<double>(reply);
+                    std::get< 1 >( protocol[ i ] ) = value;
+                }
+                if ( _xsend( ( boost::format( ":PULSE%1%:DELAY?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
+                    double value = boost::lexical_cast<double>(reply);
+                    std::get< 0 >( protocol[ i ] ) = value;
+                }
+            } catch ( boost::bad_lexical_cast& ex ) {
+                log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
+            }
+        }
+    } else {
+        // fill debug data
+        d.setIdn( "debug::IDN" );
+        d.setFull( "debug::inst::full" );
+
+        auto& protocol = *d.begin();
+        for ( int i = 0; i < protocol.size; ++i ) {
+            std::get< 0 >( protocol[ i ] ) = i * 1.0e-6 + 0.1e-6; // 1.1us
+            std::get< 1 >( protocol[ i ] ) = (i + 1) * 0.10 * 1.0e-6;  // 100ns
+            std::get< 2 >( protocol[ i ] ) = ( i & 01 ) ? true : false;
+        }
+    }
+
     return true;
 }
 
@@ -219,6 +261,7 @@ bnc565::peripheral_query_device_data( bool verbose )
 
     if ( _xsend( "*IDN?\r\n", reply ) && reply[0] != '?' ) { // identify
         idn_ = reply;
+        protocols_.setIdn( reply );
     }
 
     if ( verbose )
@@ -226,6 +269,7 @@ bnc565::peripheral_query_device_data( bool verbose )
 
     if ( _xsend( ":INST:FULL?\r\n", reply ) && reply[0] != '?' ) {
         inst_full_ = reply;
+        protocols_.setFull( reply );
     }
     
     if ( verbose )
@@ -237,6 +281,7 @@ bnc565::peripheral_query_device_data( bool verbose )
             try {
                 int value = boost::lexical_cast<int>(reply);
                 state0_ = value;
+                protocols_.setState( value );
             } catch ( std::exception& ex ) {
                 log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
             }
@@ -244,6 +289,8 @@ bnc565::peripheral_query_device_data( bool verbose )
     }
     if ( verbose )
         std::cout << ":PULSE0:STATE? : " << reply << std::endl;
+
+    auto& protocol = *protocols_.begin();
     
     for ( int i = 0; i < int(states_.size()); ++i ) {
         const char * loc = "";
@@ -252,16 +299,19 @@ bnc565::peripheral_query_device_data( bool verbose )
                 loc = "STATE";
                 int value = boost::lexical_cast<int>(reply);
                 states_[ i ].state = value;
+                std::get< 2 >( protocol[ i ] ) = ( std::get< 2 >( protocol[ i ] ) & 0xffff0000 ) | ( value << 16 );
             }
             if ( _xsend( ( boost::format( ":PULSE%1%:WIDTH?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "WIDTH";
                 double value = boost::lexical_cast<double>(reply);
                 states_[ i ].width = value;
+                std::get< 1 >( protocol[ i ] ) = value;
             }
             if ( _xsend( ( boost::format( ":PULSE%1%:DELAY?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "DELAY";
                 double value = boost::lexical_cast<double>(reply);
                 states_[ i ].delay = value;
+                std::get< 0 >( protocol[ i ] ) = value;
             }
             if ( verbose )
                 std::cout << boost::format( ":PULSE%1%" ) % (i+1)
@@ -344,7 +394,11 @@ bnc565::_xsend( const char * data, std::string& reply )
         } else {
             xsend_timeout_c_++;
         }
+
+        return false;
     }
+    // debug
+    std::cout << __FILE__ << ":" << __LINE__ << " " << data << std::endl;
     return false;
 }
 
@@ -367,6 +421,9 @@ bnc565::initialize( const std::string& ttyname, int baud )
     usb_ = std::make_unique< serialport >( io_service_ );
 
     if ( ! usb_->open( ttyname.c_str(), baud ) ) {
+        auto ec = usb_->error_code();
+        log( dg::log::WARN ) << boost::format( "Error: %1% for tty device '%2%'" )
+            % ec.message() % ttyname;
         return false;
     }
 
@@ -404,7 +461,7 @@ bnc565::reset()
 
     if ( _xsend( "*RST\r\n", reply, "ok", 10 ) ) {
 
-        for ( int ch  = 1; ch <= 5; ++ch ) {
+        for ( int ch  = 1; ch <= 8; ++ch ) {
             
             _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
             _xsend( (boost::format(":PULSE%1%:POL NORM\r\n") % ch).str().c_str(), reply, "ok", 10 );

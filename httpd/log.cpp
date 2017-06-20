@@ -33,6 +33,7 @@
 #include <mutex>
 
 extern bool __debug_mode__;
+extern const char * __argv0__;
 
 namespace dg {
     static std::atomic_flag _is_syslog_open = { 0 }; // ATOMIC_FLAG_INIT );
@@ -44,7 +45,7 @@ log::log( priority level ) : level_( level )
 {
 #if defined __linux__
     if ( !_is_syslog_open.test_and_set( std::memory_order_acquire ) )
-        openlog( "dg-httpd", LOG_CONS | LOG_PID, LOG_DAEMON );
+        openlog( __argv0__, LOG_CONS | LOG_PID, LOG_DAEMON );
 #endif
 }
 

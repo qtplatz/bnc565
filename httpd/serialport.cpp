@@ -45,27 +45,41 @@ serialport::close()
     port_.close();
 }
 
+const boost::system::error_code&
+serialport::error_code() const
+{
+    return ec_;
+}
+
 bool
 serialport::open( const std::string& device_name, unsigned int baud_rate )
 {
-    port_.open( device_name );
+    port_.open( device_name, ec_ );
+
+    if ( ec_ )
+        return false;
 
     if ( ! port_.is_open() )
         return false;
-
+    
     if ( baud_rate > 0 ) {
         typedef boost::asio::serial_port_base asio_serial;
         
         port_.set_option( asio_serial::baud_rate( baud_rate ) );
-
+        
         // application can override options using 'operator boost::asio::serial_port& ()'
         port_.set_option( asio_serial::flow_control( asio_serial::flow_control::none ) );
         port_.set_option( asio_serial::parity( asio_serial::parity::none ) );
         port_.set_option( asio_serial::stop_bits( asio_serial::stop_bits::one ) );
         port_.set_option( asio_serial::character_size( 8 ) );
-
     }
     return true;
+}
+
+bool
+serialport::is_open() const
+{
+    return port_.is_open();
 }
 
 void

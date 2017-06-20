@@ -12,6 +12,8 @@ include ( standalone.cmake )
 
 option( DEBUG_SYMBOL "DEBUG_SYMBOL" OFF )
 
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+
 if ( NOT ${CMAKE_BUILD_TYPE} STREQUAL "" )
   # WIN32 has no default BUILD_TYPE
   string( TOLOWER ${CMAKE_BUILD_TYPE} build_type )

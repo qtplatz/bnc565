@@ -1,7 +1,7 @@
 // This is a -*- C++ -*- header.
 /**************************************************************************
-** Copyright (C) 2016 Toshinobu Hondo, Ph.D.
-** Copyright (C) 2016 MS-Cheminformatics LLC
+** Copyright (C) 2016-2017 Toshinobu Hondo, Ph.D.
+** Copyright (C) 2016-2017 MS-Cheminformatics LLC
 *
 ** Contact: info@ms-cheminfo.com
 **
@@ -30,6 +30,7 @@
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
 #include <iostream>
+#include <ratio>
 
 static void
 print( const boost::property_tree::ptree& pt )
@@ -58,30 +59,34 @@ namespace dg {
         try {
             boost::property_tree::read_json( json, pt );
 
-            protocols.interval_ = std::stod( pt.get_child( "protocols.interval" ).data() ) * 1.0e-6; // us -> seconds
+            if ( auto interval = pt.get_optional< double >( "protocols.interval" ) )
+                protocols.interval_ = interval.get() / std::micro::den; // us -> seconds
+            // protocols.interval_ = std::stod( pt.get_child( "protocols.interval" ).data() ) * 1.0e-6; // us -> seconds
                 
             for ( const auto& v : pt.get_child( "protocols.protocol" ) ) {
 
                 protocol<delay_pulse_count> data;
-
-                int index = std::stoi( v.second.get_child( "index" ).data() );
-                int replicates = std::stoi( v.second.get_child( "replicates" ).data() );
-
-                data.setReplicates( replicates );
+                int index = 0;
+                if ( auto value = v.second.get_optional< int >( "index" ) )
+                    index = value.get();
 
                 size_t ch(0);
                 for ( const auto& pulse: v.second.get_child( "pulses" ) ) {
-                    double delay, width;
+                    auto v = std::make_tuple( 0, 0, false );
                     if ( ch < protocol<>::size ) {
-                        delay = std::stod( pulse.second.get_child( "delay" ).data() );
-                        width = std::stod( pulse.second.get_child( "width" ).data() );
-                        data[ int(ch) ] = std::make_pair( delay * 1.0e-6, width * 1.0e-6 );
+                        if ( auto delay = pulse.second.get_optional< double >( "delay" ) )
+                            std::get< 0 >( v ) = delay.value();
+                        if ( auto width = pulse.second.get_optional< double >( "width" ) )
+                            std::get< 1 >( v ) = width.value();
+                        if ( auto inv = pulse.second.get_optional< bool >( "inv" ) )
+                            std::get< 2 >( v ) = inv.value();
+                        data[ int(ch) ] = v;
                     }
                     ++ch;
-                    // std::cout << "----- ch : " << ch << " delay: " << delay << " width: " << width << std::endl;
+                    std::cout << __FILE__ << __LINE__ << "----- ch : " << ch << " delay: "
+                              << std::get<0>(v) << " width: " << std::get<1>(v) << " inv=" << std::get<2>(v) << std::endl;
                 }
                 protocols.protocols_.emplace_back( data );
-                // std::cout << "----- protocol : " << protocols_.size() << std::endl;
             }
 
             return true;
@@ -99,8 +104,11 @@ namespace dg {
     protocols< protocol<> >::write_json( std::ostream& o, const protocols< protocol<> >& protocols )
     {
         boost::property_tree::ptree pt;
+
+        pt.put( "idn", protocols.idn() );
+        pt.put( "inst_full", protocols.full() );
     
-        pt.put( "protocols.interval", protocols.interval_ * 1.0e6 ); // seconds --> us
+        pt.put( "protocols.interval", protocols.interval_ ); // seconds --> us
     
         boost::property_tree::ptree pv;
     
@@ -111,16 +119,16 @@ namespace dg {
             boost::property_tree::ptree xproto;
         
             xproto.put( "index", protocolIndex++ );
-            xproto.put( "replicates", protocol.replicates() );
         
             boost::property_tree::ptree xpulses;
         
             for ( const auto& pulse: protocol.pulses() ) {
                 boost::property_tree::ptree xpulse;
 
-                xpulse.put( "delay", ( boost::format( "%.3lf" ) % ( pulse.first * 1.0e6 ) ).str() );
-                xpulse.put( "width", ( boost::format( "%.3lf" ) % ( pulse.second * 1.0e6 ) ).str() );
-
+                xpulse.put( "delay", ( boost::format( "%g" ) % ( std::get<0>(pulse) * std::micro::den ) ).str() );
+                xpulse.put( "width", ( boost::format( "%g" ) % ( std::get<1>(pulse) * std::micro::den ) ).str() );
+                xpulse.put( "inv", std::get<2>(pulse) );
+                
                 xpulses.push_back( std::make_pair( "", xpulse ) );
             }
         

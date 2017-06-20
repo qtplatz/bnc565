@@ -64,6 +64,15 @@ namespace dg {
         void resize( size_t sz ) {
             protocols_.resize( sz );
         }
+
+        const std::string& idn() const { return idn_; }
+        void setIdn( const std::string& v ) { idn_ = v; }
+
+        const std::string& full() const { return inst_full_; }
+        void setFull( const std::string& v ) { inst_full_ = v; }
+
+        int state() const { return state_; }
+        void setState( int v ) { state_ = v; }
         
         typedef typename std::vector< protocol_type >::const_iterator const_iterator;
         typedef typename std::vector< protocol_type >::iterator iterator;
@@ -76,6 +85,9 @@ namespace dg {
 
     private:
         double interval_;
+        std::string idn_;
+        std::string inst_full_;
+        int state_;
         std::vector< protocol_type > protocols_;
     };
         

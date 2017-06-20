@@ -47,9 +47,13 @@ public:
     void write ( const char *, std::size_t );
     bool write ( const char *, std::size_t, unsigned long microseconds );
 
+    const boost::system::error_code& error_code() const;
+    bool is_open() const;
+
 private:
     std::mutex mutex_;
     std::condition_variable cond_;
+    boost::system::error_code ec_;
 
     boost::asio::serial_port port_;
     boost::asio::streambuf read_buffer_;

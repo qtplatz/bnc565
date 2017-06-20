@@ -26,11 +26,14 @@
 int __verbose_level__ = 0;
 bool __debug_mode__ = false;
 bool __httpd__ = true;
+const char * __argv0__;
 
 int
 main(int argc, char* argv[])
 {
     namespace po = boost::program_options;
+
+    __argv0__ = argv[0];
     
     try {
         po::variables_map vm;

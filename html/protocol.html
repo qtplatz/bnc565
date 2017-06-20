@@ -1,73 +1,76 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-  </head>
-
-  <body style="font-family:Verdana;font-size:14pt">
-    <table id="idPulseTable">
-      <th> </th><th>delay(&mu;s)</th><th>width(&mu;s)</th>
-      <tr>
-	<td>PUSH</td>
-	<td>
-	  <input type="text" id="D0" onkeyup="showHint(this.value, this.id)" value="0" >
-	</td>
-	<td>
-	  <input type="text" id="W0" onkeyup="showHint(this.value, this.id)" value="0" >
-	</td>
-      </tr>
-      <tr>
-	<td>INJ</td>	
-	<td>
-	  <input type="text" id="D1" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-	<td>
-	  <input type="text" id="W1" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-      </tr>
-      <tr>
-	<td>EXIT</td>	
-	<td>
-	  <input type="text" id="D2" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-	<td>
-	  <input type="text" id="W2" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-      </tr>            
-      <tr>
-	<td>GATE(0)</td>	
-	<td>
-	  <input type="text" id="D3" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-	<td>
-	  <input type="text" id="W3" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-      </tr>            
-      <tr>
-	<td>GATE(1)</td>	
-	<td>
-	  <input type="text" id="D4" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-	<td>
-	  <input type="text" id="W4" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-      </tr>
-      <tr>
-	<td>ADC delay</td>	
-	<td>
-	  <input type="text" id="D5" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-	<td>
-	  <input type="text" id="W5" onkeyup="showHint(this.value, this.id)" value="0">
-	</td>
-      </tr>
-      <tr>
-	<td>T<sub>0</sub></td>
-	<td>Push interval(&mu;s)</td>
-	<td>
-	  <input type="text" id="T0" onkeyup="showHint(this.value, this.id)" value="1000">
-	</td>
-      </tr>            
-    </table>
+  <body>
+    <section>
+      <div id="protocolIndex"  style="float: left"><em>Set</em>
+	<table id="idProtocol">
+	  <th/> <th>Delay(&mu;s)</th><th>Width(&mu;s)</th><th>Neg</th>
+	  <tr>
+	    <td><em>CH-1</em></td>
+	    <td><input type="number" id="PULSE.DELAY.A" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
+	    <td><input type="number" id="PULSE.WIDTH.A" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.1" id="PULSE.INV.A" value="true" />
+	    </div></td>
+	  </tr>
+	  <tr>
+	    <td><em>CH-2</em></td>	    
+	    <td><input type="number" id="PULSE.DELAY.B" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
+	    <td><input type="number" id="PULSE.WIDTH.B" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.2" id="PULSE.INV.B" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-3</em></td>
+	    <td><input type="number" id="PULSE.DELAY.C" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td><input type="number" id="PULSE.WIDTH.C" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.3" id="PULSE.INV.C" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-4</em></td>
+	    <td> <input type="number" id="PULSE.DELAY.D" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
+	    <td> <input type="number" id="PULSE.WIDTH.D" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.4" id="PULSE.INV.D" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-5</em></td>
+	    <td> <input type="number" id="PULSE.DELAY.E" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td> <input type="number" id="PULSE.WIDTH.E" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
+	    <td><div class="bootstrap-switch-square">
+	      <input type="checkbox" data-toggle="switch" name="INV.5" id="PULSE.INV.E" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-6</em></td>
+	    <td> <input type="number" id="PULSE.DELAY.F" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td> <input type="number" id="PULSE.WIDTH.F" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.6" id="PULSE.INV.F" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-7</em></td>
+	    <td> <input type="number" id="PULSE.DELAY.G" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td> <input type="number" id="PULSE.WIDTH.G" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.7" id="PULSE.INV.G" value="true" />
+	    </div></td>	    
+	  </tr>
+	  <tr>
+	    <td><em>CH-8</em></td>
+	    <td> <input type="number" id="PULSE.DELAY.H" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td> <input type="number" id="PULSE.WIDTH.H" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
+	    <td><div class="bootstrap-switch-square">
+		<input type="checkbox" data-toggle="switch" name="INV.8" id="PULSE.INV.H" value="true" />
+	    </div></td>	    
+	  </tr>
+	</table>
+      </div>
+    </section>
   </body>
 </html>
