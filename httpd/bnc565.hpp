@@ -52,6 +52,7 @@ namespace dg {
         static bnc565 * instance();
 
         operator bool () const;
+        bool state() const;
 
         void setSerialDevice( const char * tty );
         const std::string& serialDevice() const;
@@ -76,8 +77,7 @@ namespace dg {
         bool peripheral_query_device_data( bool verbose = false );
 
         void setInterval( double );
-        double interval() const { return interval0_; }
-        bool state0() const { return state0_; }
+        double interval() const;
 
         bool xsend( const char * data, std::string& );
         bool initialize( const std::string&, int baud );
@@ -93,10 +93,6 @@ namespace dg {
         std::vector< std::thread > threads_;
         void on_timer( const boost::system::error_code& ec );
         //
-        //std::vector<Channel> states_;
-        //std::vector< DelaySetpoint > setpts_;
-        double interval0_;
-        bool state0_;
         std::unique_ptr< serialport > usb_;
         std::condition_variable cond_;
         std::mutex mutex_;

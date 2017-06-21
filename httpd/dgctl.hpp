@@ -1,7 +1,7 @@
 // -*- C++ -*-
 /**************************************************************************
-** Copyright (C) 2010-2011 Toshinobu Hondo, Ph.D.
-** Copyright (C) 2013-2015 MS-Cheminformatics LLC
+** Copyright (C) 2010-2017 Toshinobu Hondo, Ph.D.
+** Copyright (C) 2013-2017 MS-Cheminformatics LLC
 *
 ** Contact: toshi.hondo@scienceliaison.com
 **
@@ -26,6 +26,7 @@
 #pragma once
 
 #include "dgprotocols.hpp"
+#include <boost/signals2.hpp>
 #include <array>
 #include <atomic>
 #include <memory>
@@ -33,6 +34,7 @@
 #include <utility>
 #include <vector>
 #include <functional>
+
 
 // namespace adportable { namespace dg { class protocols; } }
 
@@ -70,14 +72,19 @@ namespace dg {
         
         void update();
         bool http_request( const std::string& method, const std::string& request_path, std::string& );
-        void register_sse_handler( std::function< void( const std::string&, const std::string&, const std::string& ) > );
+
+        typedef boost::signals2::signal< void( const std::string&, const std::string&, const std::string& ) > sse_handler_t;
+
+        boost::signals2::connection register_sse_handler( const sse_handler_t::slot_type& );
+        // void register_sse_handler( std::function< void( const std::string&, const std::string&, const std::string& ) > );
 
     private:
         bool is_active_;
         bool is_dirty_;
         double pulser_interval_;
         std::array< value_type, nitem > pulses_;
-        std::vector< std::function< void( const std::string&, const std::string&, const std::string& ) > > event_handlers_;
+        sse_handler_t sse_handler_;
+        // std::vector< std::function< void( const std::string&, const std::string&, const std::string& ) > > event_handlers_;
         // std::shared_ptr< adportable::dg::protocols > protocols_;
     };
 }

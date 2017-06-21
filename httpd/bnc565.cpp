@@ -81,6 +81,14 @@ bnc565::operator bool () const
     return usb_->is_open();
 }
 
+bool
+bnc565::state() const
+{
+    if ( usb_->is_open() )
+        return protocols_.state();
+    return false;
+}
+
 bnc565::~bnc565()
 {
     timer_.cancel();
@@ -223,6 +231,7 @@ bnc565::fetch( dg::protocols<>& d )
             std::get< 2 >( protocol[ i ] ) = ( i & 01 ) ? true : false;
         }
     }
+    protocols_ = d;
 
     return true;
 }
@@ -283,7 +292,6 @@ bnc565::peripheral_query_device_data( bool verbose )
         if ( reply[0] != '?' ) {
             try {
                 int value = boost::lexical_cast<int>(reply);
-                state0_ = value;
                 protocols_.setState( value );
             } catch ( std::exception& ex ) {
                 log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
@@ -511,6 +519,13 @@ bnc565::reset()
 }
 
 void
-bnc565::setInterval( double )
+bnc565::setInterval( double v )
 {
+    protocols_.setInterval( v );
+}
+
+double
+bnc565::interval() const
+{
+    return protocols_.interval();
 }
