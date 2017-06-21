@@ -9,7 +9,7 @@ function handleOnOff( _this ) {
 
     var id = _this.id;
     var value = _this.checked;
-    xmlhttp.open("GET","ctl?set="+JSON.stringify( { checkbox: [{id, value}] } ), true)
+    xmlhttp.open("GET","/dg/ctl?set="+JSON.stringify( { checkbox: [{id, value}] } ), true)
     xmlhttp.send()
 }
 
@@ -24,8 +24,13 @@ function handleClicked( _this ) {
 
     var id = _this.id;
     var value = _this.checked;
-    xmlhttp.open("GET","ctl?set="+JSON.stringify( { clicked: [{id, value}] } ), true)
+    xmlhttp.open("GET","/dg/ctl?set="+JSON.stringify( { clicked: [{id, value}] } ), true)
     xmlhttp.send()
+}
+
+function submitCmdText() {
+
+    console.log( text );
 }
 
 $(function() {
@@ -43,6 +48,11 @@ $(function() {
 
     $( "[id^=button-fetch]" ).on( 'click', function( e ) {
 	fetchStatus();
+    });
+
+    $( "[id^=button-submit]" ).on( 'click', function( e ) {
+	var text = $('textarea#cmdtext').val();
+	submitText( text );
     });
 
 });

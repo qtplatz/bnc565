@@ -195,7 +195,7 @@ bnc565::fetch( dg::protocols<>& d )
                     protocol.delay( ch ) = boost::lexical_cast<double>(reply); // seconds
                 }
                 if ( _xsend( ( boost::format( ":PULSE%1%:POL?\r\n" ) % (ch+1) ).str().c_str(), reply ) ) {
-                    protocol.polarity( ch ) = reply; // 'NORM' | 'INV'
+                    protocol.polarity( ch ) = ( reply == "NORM" || reply == "HIGH" ) ? dg::positive_polarity : dg::negative_polarity;
                 }                
             } catch ( boost::bad_lexical_cast& ex ) {
                 log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
@@ -302,7 +302,7 @@ bnc565::peripheral_query_device_data( bool verbose )
             }
             if ( _xsend( ( boost::format( ":PULSE%1%:POL?\r\n" ) % (i+1) ).str().c_str(), reply ) ) {
                 loc = "POL";
-                protocol.polarity( i ) = reply;
+                protocol.polarity( i ) = ( reply == "NORM" || reply == "HIGH" ) ? dg::positive_polarity : dg::negative_polarity;
             }
             
             if ( verbose )

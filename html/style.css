@@ -5,8 +5,9 @@ body {
     text-align: left;
 }
 
-section { border:1px solid gray; padding:10px; overflow:hidden; }
-section > section { float:left; }
+section { border:1px solid gray; padding:8px; overflow:hidden; }
+/* section > section { float:left; }
+*/
 .margin-top-05 { margin-top: 0.5em; }
 .margin-top-10 { margin-top: 1.0em; }
 .margin-top-15 { margin-top: 1.5em; }
@@ -19,6 +20,20 @@ section > section { float:left; }
     margin-right: 0px;
 }​
 
-table { background: gray; }
-
 td { padding: 0 8px; }
+
+textarea {
+ width: 300px;
+ height: 100px;
+ background-color: yellow;
+ font-size: 1em;
+ font-weight: bold;
+ font-family: Verdana, Arial, Helvetica, sans-serif;
+ border: 1px solid black;
+}
+
+#textarea_div {
+     white-space: pre-wrap;
+}
+/* textarea { white-space: pre-wrap; background-color: red; }
+*/

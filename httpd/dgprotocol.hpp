@@ -30,9 +30,11 @@
 
 namespace dg {
 
-    typedef std::tuple< double, double, std::string, int > delay_pulse_type;
+    typedef std::tuple< double, double, bool, int > delay_pulse_type;
 
     enum { pulse_delay, pulse_width, pulse_polarity, pulse_state };
+
+    enum { positive_polarity, negative_polarity }; // false = pos, true = neg
 
     size_t constexpr delay_pulse_count = 8;
 
@@ -58,10 +60,10 @@ namespace dg {
             return pulses_;
         }
 
-        double& delay( int ch )         { return std::get< pulse_delay > ( pulses_[ ch ] ); }
-        double& width( int ch )         { return std::get< pulse_width > ( pulses_[ ch ] ); }
-        std::string& polarity( int ch ) { return std::get< pulse_polarity > ( pulses_[ ch ] ); }
-        int& state( int ch )            { return std::get< pulse_state > ( pulses_[ ch ] ); }
+        double& delay( int ch )  { return std::get< pulse_delay > ( pulses_[ ch ] ); }
+        double& width( int ch )  { return std::get< pulse_width > ( pulses_[ ch ] ); }
+        bool& polarity( int ch ) { return std::get< pulse_polarity > ( pulses_[ ch ] ); }
+        int& state( int ch )     { return std::get< pulse_state > ( pulses_[ ch ] ); }
         
     private:
         std::array< delay_pulse_type, _size > pulses_;  // delay, width, inv, state

@@ -4,70 +4,66 @@
     <section>
       <div id="protocolIndex"  style="float: left"><em>Set</em>
 	<table id="idProtocol">
-	  <th/> <th>Delay(&mu;s)</th><th>Width(&mu;s)</th><th>Neg</th>
+	  <col width="0">
+	  <col width="0">
+	  <col width="40">
+	  <col width="40">
+	  <th/> <th>Delay(&mu;s)</th><th>Width(&mu;s)</th><th>NEG</th><th>Active</th>
 	  <tr>
 	    <td><em>CH-1</em></td>
 	    <td><input type="number" id="PULSE.DELAY.A" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
 	    <td><input type="number" id="PULSE.WIDTH.A" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.1" id="PULSE.INV.A" value="true" />
-	    </div></td>
+	    <td><input type="checkbox" data-toggle="switch" id="PULSE.POL.A" /></td>
+	    <td><input type="checkbox" data-toggle="switch" id="PULSE.STATE.A" /></td>
 	  </tr>
 	  <tr>
 	    <td><em>CH-2</em></td>	    
-	    <td><input type="number" id="PULSE.DELAY.B" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
-	    <td><input type="number" id="PULSE.WIDTH.B" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.2" id="PULSE.INV.B" value="true" />
-	    </div></td>	    
+	    <td> <input type="number" id="PULSE.DELAY.B" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
+	    <td> <input type="number" id="PULSE.WIDTH.B" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.B" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.B" /></td>
 	  </tr>
 	  <tr>
 	    <td><em>CH-3</em></td>
-	    <td><input type="number" id="PULSE.DELAY.C" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
-	    <td><input type="number" id="PULSE.WIDTH.C" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.3" id="PULSE.INV.C" value="true" />
-	    </div></td>	    
+	    <td> <input type="number" id="PULSE.DELAY.C" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
+	    <td> <input type="number" id="PULSE.WIDTH.C" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.C" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.C" /></td>	    
 	  </tr>
 	  <tr>
 	    <td><em>CH-4</em></td>
 	    <td> <input type="number" id="PULSE.DELAY.D" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /></td>
 	    <td> <input type="number" id="PULSE.WIDTH.D" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /> </td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.4" id="PULSE.INV.D" value="true" />
-	    </div></td>	    
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.D" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.D" /></td>	    	    
 	  </tr>
 	  <tr>
 	    <td><em>CH-5</em></td>
 	    <td> <input type="number" id="PULSE.DELAY.E" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
 	    <td> <input type="number" id="PULSE.WIDTH.E" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
-	    <td><div class="bootstrap-switch-square">
-	      <input type="checkbox" data-toggle="switch" name="INV.5" id="PULSE.INV.E" value="true" />
-	    </div></td>	    
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.E" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.E" /></td>	    
 	  </tr>
 	  <tr>
 	    <td><em>CH-6</em></td>
 	    <td> <input type="number" id="PULSE.DELAY.F" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
 	    <td> <input type="number" id="PULSE.WIDTH.F" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.6" id="PULSE.INV.F" value="true" />
-	    </div></td>	    
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.F" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.F" /></td>	    	    
 	  </tr>
 	  <tr>
 	    <td><em>CH-7</em></td>
 	    <td> <input type="number" id="PULSE.DELAY.G" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
 	    <td> <input type="number" id="PULSE.WIDTH.G" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.7" id="PULSE.INV.G" value="true" />
-	    </div></td>	    
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.G" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.G" /></td>
 	  </tr>
 	  <tr>
 	    <td><em>CH-8</em></td>
 	    <td> <input type="number" id="PULSE.DELAY.H" min=0 max=1000 step="0.01" onchange="onEdit( this )" value="0" /> </td>
 	    <td> <input type="number" id="PULSE.WIDTH.H" min=0.01 max=1000 step="0.01" onchange="onEdit( this )" value="0.010" /></td>
-	    <td><div class="bootstrap-switch-square">
-		<input type="checkbox" data-toggle="switch" name="INV.8" id="PULSE.INV.H" value="true" />
-	    </div></td>	    
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.POL.H" /></td>
+	    <td> <input type="checkbox" data-toggle="switch" id="PULSE.STATE.H" /></td>
 	  </tr>
 	</table>
       </div>

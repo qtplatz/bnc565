@@ -62,21 +62,22 @@
       </div>
     </section>
 
-    <hr/>
-
     <!-- Channels Table -->
     <section>
       <div class="container">
-	<div class="col-sm-12" id="p[0]" data-index="0"></div>
+	<div class="col-xs-12" id="p[0]" data-index="0"></div>
       </div>      
     </section>
     <!-- End Channels Table -->
     
     <section>
-      <form id="malpix-crylas-cmdline">
-	Command: <input type="textbox" id="cmdtext" value="DB0"/>
-	<button type="submit" value="Submit" class="btn bun-default" id="submit" data-size="mini">Submit</button>
-      </form>	
+      <div class="form-horizontal">
+	<div class="form-group" id="textarea_div">
+	  <textarea class="form-control" id="cmdtext", rows="3" placeholder="Type your command here..." rerquired></textarea>
+	  <button type="submit" value="Submit" class="btn bun-default" id="button-submit" data-size="mini">Submit</button>
+	</div>
+      </div>
+	<!-- </form>	-->
     </section>
     
     <footer>
@@ -93,6 +94,7 @@
     <script src="/bootstrap-toggle/js/bootstrap-toggle.js"></script>
     <script type="text/javascript" src="commitdata.js"></script>
     <script type="text/javascript" src="valuechanged.js"></script>
+    <script type="text/javascript" src="submittext.js"></script>    
     <script type="text/javascript" src="onoffchanged.js"></script>    
     <script type="text/javascript" src="loadbanner.js"></script>
     <script type="text/javascript" src="fetchstatus.js"></script>

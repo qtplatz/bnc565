@@ -192,7 +192,8 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         if ( bnc565::instance()->fetch( p ) ) {
             if ( dg::protocols<>::write_json( o, p ) )
                 rep += o.str();
-            //dg::protocols<>::write_json( std::cout, p );
+
+            // dg::protocols<>::write_json( std::cout, p );
         }
 
     } else if ( request_path == "/dg/ctl?banner" ) {
@@ -208,7 +209,7 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         try {
             if ( dg::protocols<>::read_json( payload, protocols ) ) {
 
-                dg::protocols<>::write_json( std::cout, protocols );
+                // dg::protocols<>::write_json( std::cout, protocols );
 
                 bnc565::instance()->commit( protocols );
                 o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );
@@ -217,6 +218,11 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         } catch ( std::exception& e ) {
             log() << boost::diagnostic_information( e );
         }
+
+    } else if ( request_path.compare( 0, 20, "/dg/ctl?submit.text=", 20 ) == 0 ) {
+
+        std::string payload( request_path.substr( 20 ) );
+        std::cout << payload << std::endl;
 
     } else if ( request_path == "/dg/ctl?fsm=start" ) {
 

@@ -9,9 +9,13 @@ function updateProtocol( _this, protocol ) {
 	this.value = protocol.pulses[ i ].width;
     });
 
-    $(_this).find( ':input[id^=PULSE\\.INV]' ).each( function( i ){
-	this.checked = ( protocol.pulses[ i ].inv == 'true');
+    $(_this).find( ':input[id^=PULSE\\.POL]' ).each( function( i ){
+	this.checked = ( protocol.pulses[ i ].polarity == 'true');
     });    
+
+    $(_this).find( ':input[id^=PULSE\\.STATE]' ).each( function( i ){
+	this.checked = protocol.pulses[ i ].state;
+    });
 }
 
 function disableProtocol( _this ) {
