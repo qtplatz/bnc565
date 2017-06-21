@@ -26,6 +26,7 @@
 #pragma once
 
 #include "dgprotocol.hpp"
+#include <string>
 #include <vector>
 
 namespace dg {
