@@ -135,27 +135,26 @@ bnc565::setPulse( uint32_t channel, const std::pair<double, double>& t )
 void
 bnc565::commit( const dg::protocols<>& d )
 {
-    if ( usb_->is_open() ) {
+    const auto& p = *d.begin();
+    std::string reply;
 
-        const auto& p = *d.begin();
-        std::string reply;
+    // dg::protocols<>::write_json( std::cout, d );
+    
+    for ( int ch = 1; ch <= p.size; ++ch ) {
         
-        for ( int ch = 1; ch <= p.size; ++ch ) {
-
-            const auto& v = p[ ch - 1 ];
-            
-            _xsend( (boost::format(":PULSE%1%:STATE ON\r\n") % ch).str().c_str(), reply, "ok", 10 );
-            
-            _xsend( (boost::format(":PULSE%1%:POL %2%\r\n") % ch % std::get< dg::pulse_polarity>( v ) ).str().c_str(), reply, "ok", 10 );
-            
-            _xsend( (boost::format(":PULSE%1%:DELAY %E\r\n") % ch % std::get< dg::pulse_delay >( v ) ).str().c_str(), reply, "ok", 10 );
-
-            _xsend( (boost::format(":PULSE%1%:WIDTH %E\r\n") % ch % std::get< dg::pulse_width >( v ) ).str().c_str(), reply, "ok", 10 );
-            
-        }
-        _xsend( ":SYST:KLOCK OFF\r\n", reply, "ok", 10 );  // off keypad lock
-        _xsend( ":PULSE0:STATE ON\r\n", reply, "ok", 10 ); // start trigger        
+        const auto& v = p[ ch - 1 ];
+        const char * state = std::get< dg::pulse_state >( v ) ? "ON" : "OFF";
+        const char * pol = std::get< dg::pulse_polarity >( v ) ? "NORM" : "INV";
+        std::string delay = ( boost::format( "%g" ) % std::get< dg::pulse_delay >( v ) ).str();
+        std::string width = ( boost::format( "%g" ) % std::get< dg::pulse_width >( v ) ).str();
         
+        _xsend( (boost::format(":PULSE%1%:STATE %2%\r\n") % ch % state ).str().c_str(), reply, "ok", 10 );
+        
+        _xsend( (boost::format(":PULSE%1%:POL %2%\r\n")   % ch % pol ).str().c_str(), reply, "ok", 10 );
+        
+        _xsend( (boost::format(":PULSE%1%:DELAY %2%\r\n") % ch % delay ).str().c_str(), reply, "ok", 10 );
+        
+        _xsend( (boost::format(":PULSE%1%:WIDTH %2%\r\n") % ch % width ).str().c_str(), reply, "ok", 10 );
     }
 }
 
@@ -359,7 +358,7 @@ bnc565::_xsend( const char * data, std::string& reply )
 {
     reply.clear();
 
-    if ( usb_ ) {
+    if ( usb_->is_open() ) {
 
         std::unique_lock< std::mutex > lock( mutex_ );
 
@@ -387,17 +386,20 @@ bnc565::_xsend( const char * data, std::string& reply )
         } else {
             xsend_timeout_c_++;
         }
-
         return false;
     }
-    // debug
-    std::cout << __FILE__ << ":" << __LINE__ << " " << data << std::endl;
     return false;
 }
 
 bool
 bnc565::_xsend( const char * data, std::string& reply, const std::string& expect, size_t ntry )
 {
+    if ( ! usb_->is_open() ) {
+        // debug
+        std::cout << __FILE__ << ":" << __LINE__ << " " << data << std::endl;
+        return false;
+    }
+    
     while ( ntry-- ) {
         if ( _xsend( data, reply ) && reply == expect )
             return true;

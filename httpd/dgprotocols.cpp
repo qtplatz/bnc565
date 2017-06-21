@@ -62,8 +62,9 @@ namespace dg {
             if ( auto state = pt.get_optional< int >( "protocols.state" ) )
                 protocols.state_ = state.get();
             
-            if ( auto interval = pt.get_optional< double >( "protocols.interval" ) )
+            if ( auto interval = pt.get_optional< double >( "protocols.interval" ) ) {
                 protocols.interval_ = interval.get() / std::micro::den; // us
+            }
                 
             for ( const auto& v : pt.get_child( "protocols.protocol" ) ) {
 
@@ -74,17 +75,17 @@ namespace dg {
 
                 size_t ch(0);
                 for ( const auto& pulse: v.second.get_child( "pulses" ) ) {
-                    auto v = std::make_tuple( 0, 0, false, 1 );
+
+                    auto& x = data[ ch ];
                     if ( ch < protocol<>::size ) {
                         if ( auto delay = pulse.second.get_optional< double >( "delay" ) )
-                            std::get< dg::pulse_delay >( v ) = delay.value() / std::micro::den;
+                            std::get< dg::pulse_delay >( x ) = delay.value() / std::micro::den;
                         if ( auto width = pulse.second.get_optional< double >( "width" ) )
-                            std::get< dg::pulse_width >( v ) = width.value() / std::micro::den;
-                        if ( auto pol = pulse.second.get_optional< std::string >( "polarity" ) )
-                            std::get< dg::pulse_polarity >( v ) = "NORM";
+                            std::get< dg::pulse_width >( x ) = width.value() / std::micro::den;
+                        if ( auto pol = pulse.second.get_optional< bool >( "polarity" ) )
+                            std::get< dg::pulse_polarity >( x ) = pol.get();
                         if ( auto state = pulse.second.get_optional< bool >( "state" ) )
-                            std::get< dg::pulse_state >( v ) = state.value();                        
-                        data[ int(ch) ] = v;
+                            std::get< dg::pulse_state >( x ) = state.get();
                     }
                     ++ch;
                 }

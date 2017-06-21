@@ -188,7 +188,12 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
 
     std::cout << __FILE__ << __LINE__ << "http_request: " << method << " : " << request_path << std::endl;
 
-    if ( request_path == "/dg/ctl?status.json" ) {
+    if ( request_path == "/dg/ctl?banner" ) {
+
+        o << "<h2>BNC 565 V" << PACKAGE_VERSION " S/N " << bnc565::instance()->idn() << "</h2>";
+        rep += o.str();
+
+    } else if ( request_path == "/dg/ctl?status.json" ) {
 
         dg::protocols<> p;
         if ( bnc565::instance()->fetch( p ) ) {
@@ -197,11 +202,6 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
             // dg::protocols<>::write_json( std::cout, p );
         }
 
-    } else if ( request_path == "/dg/ctl?banner" ) {
-
-        o << "<h2>BNC 565 V" << PACKAGE_VERSION " Rev. " << bnc565::instance()->idn() << "</h2>";
-        rep += o.str();
-
     } else if ( request_path.compare( 0, 20, "/dg/ctl?commit.json=", 20 ) == 0 ) {
 
         std::stringstream payload( request_path.substr( 20 ) );
@@ -209,7 +209,9 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         
         try {
             if ( dg::protocols<>::read_json( payload, protocols ) ) {
-                // dg::protocols<>::write_json( std::cout, protocols );
+
+                dg::protocols<>::write_json( std::cout, protocols );
+
                 bnc565::instance()->commit( protocols );
                 o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );
                 rep = o.str();
