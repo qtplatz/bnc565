@@ -226,9 +226,10 @@ bnc565::fetch( dg::protocols<>& d )
 
         auto& protocol = *d.begin();
         for ( int i = 0; i < protocol.size; ++i ) {
-            std::get< 0 >( protocol[ i ] ) = i * 1.0e-6 + 0.1e-6; // 1.1us
-            std::get< 1 >( protocol[ i ] ) = (i + 1) * 0.10 * 1.0e-6;  // 100ns
-            std::get< 2 >( protocol[ i ] ) = ( i & 01 ) ? true : false;
+            std::get< dg::pulse_delay >( protocol[ i ] ) = i * 1.0e-6 + 0.1e-6; // 1.1us
+            std::get< dg::pulse_width >( protocol[ i ] ) = (i + 1) * 0.10 * 1.0e-6;  // 100ns
+            std::get< dg::pulse_polarity >( protocol[ i ] ) = ( i & 01 ) ? true : false;
+            std::get< dg::pulse_state >( protocol[ i ] ) = ( i & 01 ) ? false : true;
         }
     }
     protocols_ = d;

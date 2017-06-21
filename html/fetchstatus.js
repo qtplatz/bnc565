@@ -14,7 +14,7 @@ function updateProtocol( _this, protocol ) {
     });    
 
     $(_this).find( ':input[id^=PULSE\\.STATE]' ).each( function( i ){
-	this.checked = protocol.pulses[ i ].state;
+	this.checked = ( protocol.pulses[ i ].state == 1 );
     });
 }
 

@@ -4,6 +4,7 @@ source.addEventListener( 'tick', function( e ) {
     var json = JSON.parse( e.data );
     if ( json.state ) {
 	$('#tick').text( json.state.tick + "/" + ( json.state.state == 0 ? "off" : "on" ));
+
 	var state = json.state.state == 0 ? false : true;
 	var cbx = $('#switch-connect');
 	if ( state != cbx.prop('checked') )
