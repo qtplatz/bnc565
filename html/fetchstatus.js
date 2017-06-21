@@ -24,6 +24,13 @@ function disableProtocol( _this ) {
 
 function updateProtocols( protocols ) {
 
+    var cbx = $('#switch-connect');
+    var state = protocols.state == 0 ? false : true;
+    
+    if ( state != cbx.prop('checked') ) {
+	cbx.bootstrapToggle( state ? "on" : "off" );
+    }
+    
     $('div #interval').find( ':input' ).each( function(){ // T_0
 	this.value = protocols.interval;
     });

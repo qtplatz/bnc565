@@ -65,7 +65,7 @@ namespace dg {
             if ( auto interval = pt.get_optional< double >( "protocols.interval" ) ) {
                 protocols.interval_ = interval.get() / std::micro::den; // us
             }
-                
+
             for ( const auto& v : pt.get_child( "protocols.protocol" ) ) {
 
                 protocol<delay_pulse_count> data;

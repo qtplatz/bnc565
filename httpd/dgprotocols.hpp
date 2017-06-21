@@ -33,8 +33,9 @@ namespace dg {
     template< typename protocol_type = protocol< delay_pulse_count > >
     class protocols {
     public:
-        protocols() : interval_( 1.0e-3 )
-                    , protocols_( 1 ) {
+        protocols() : protocols_( 1 )
+                    , interval_( 1.0e-3 )
+                    , state_( 0 ) {
         }
         
         protocols( const protocols& t ) : interval_( t.interval_ )
@@ -87,9 +88,9 @@ namespace dg {
         iterator end() { return protocols_.end(); }
 
     private:
-        double interval_;
         std::string idn_;
         std::string inst_full_;
+        double interval_;
         int state_;
         std::vector< protocol_type > protocols_;
     };
