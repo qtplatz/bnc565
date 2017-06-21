@@ -75,29 +75,6 @@ namespace dg {
         bool peripheral_terminate();
         bool peripheral_query_device_data( bool verbose = false );
 
-        // struct Channel {
-        //     bool state;
-        //     double width;
-        //     double delay;
-        // };
-
-        // struct DelaySetpoint {
-        //     bool state;
-        //     double width; // s
-        //     double delay; // s
-        //     uint8_t channel;
-        //     std::string name;
-        //     DelaySetpoint() : state(false), width(0), delay(0), channel(0) {}
-        //     DelaySetpoint( const char * _name ) : state(false), width(0), delay(0), channel(0), name(_name) {
-        //     }
-        //     DelaySetpoint( const DelaySetpoint& t ) : state(t.state), width(t.width)
-        //                                             , delay(t.width), channel(t.channel)
-        //                                             , name(t.name) {
-        //     }
-        // };
-
-        // const std::vector<Channel>& state() const { return states_; };
-
         void setInterval( double );
         double interval() const { return interval0_; }
         bool state0() const { return state0_; }
@@ -105,6 +82,7 @@ namespace dg {
         bool xsend( const char * data, std::string& );
         bool initialize( const std::string&, int baud );
         bool reset();
+        bool switch_connect( bool, std::string& );
         
     private:
         DeviceType deviceType_;
@@ -126,6 +104,7 @@ namespace dg {
         std::string receiving_data_;
         std::vector< std::string > que_;
         std::string ttyname_;
+        int baud_;
         std::atomic< size_t > xsend_timeout_c_;
         std::atomic< size_t > reply_timeout_c_;
 

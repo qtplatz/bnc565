@@ -31,6 +31,8 @@
 #include "dgprotocols.hpp"
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -192,7 +194,6 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         if ( bnc565::instance()->fetch( p ) ) {
             if ( dg::protocols<>::write_json( o, p ) )
                 rep += o.str();
-
             // dg::protocols<>::write_json( std::cout, p );
         }
 
@@ -208,53 +209,62 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         
         try {
             if ( dg::protocols<>::read_json( payload, protocols ) ) {
-
                 // dg::protocols<>::write_json( std::cout, protocols );
-
                 bnc565::instance()->commit( protocols );
                 o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );
                 rep = o.str();
             }
         } catch ( std::exception& e ) {
+            rep = boost::diagnostic_information( e );
             log() << boost::diagnostic_information( e );
         }
-
+        
     } else if ( request_path.compare( 0, 20, "/dg/ctl?submit.text=", 20 ) == 0 ) {
 
-        std::string payload( request_path.substr( 20 ) );
-        std::cout << payload << std::endl;
-
-    } else if ( request_path == "/dg/ctl?fsm=start" ) {
-
-        activate_trigger();
-        rep = "TRIGGER ACTIVATED";
-        
-    } else if ( request_path == "/dg/ctl?fsm=stop" ) {        
-
-        deactivate_trigger();
-        rep = "TRIGGER DEACTIVATED";                            
-
-    } else if ( request_path.compare( 0, 10, "/dg/ctl?q=", 10 ) == 0 ) {
-
-        auto colon = request_path.find_last_of( ';' );
-
-        if ( colon != std::string::npos ) {
-
-            double us = std::stod( request_path.substr( 10, colon - 10 ) );
-
-            std::string item = "error";
-            switch( request_path[ colon + 1 ] ) {
-            case 'D': item = "delay"; break;
-            case 'W': item = "width"; break;
-            case 'T' : item = "interval"; break;
-            };
-            o << boost::format("%s : %.4g&mu;s %.4gms %.4gs")
-                % item % us % (us * 1.0e-3) % ( us * 1.0e-6 );
-            rep = o.str();
+        std::stringstream payload( request_path.substr( 20 ) );
+        try {
+            boost::property_tree::ptree pt;
+            boost::property_tree::read_json( payload, pt );
+            // boost::property_tree::write_json( std::cout, pt );
+            for ( auto item: pt.get_child("") ) {
+                auto text = item.second.get_value< std::string >();
+                if ( !text.empty() ) {
+                    std::string reply;
+                    if ( bnc565::instance()->xsend( (text + "\r\n").c_str(), rep ) ) {
+                        rep += reply;
+                    } else {
+                        rep += "Error";
+                    }
+                }
+            }
+            
+        } catch ( std::exception& e ) {
+            rep = boost::diagnostic_information( e );
+            log() << boost::diagnostic_information( e );
         }
-
+    } else if ( request_path.compare( 0, 12, "/dg/ctl?set=", 12 ) == 0 ) {
+        
+        std::stringstream payload( request_path.substr( 12 ) );
+        try {
+            boost::property_tree::ptree pt;
+            boost::property_tree::read_json( payload, pt );
+            for ( auto item: pt.get_child("checkbox") ) {
+                if ( auto id = item.second.get_optional<std::string>( "id" ) ) {
+                    if ( auto value = item.second.get_optional<bool>( "value" ) ) {
+                        if ( ( id.get() == "switch-connect" ) ) {
+                            bnc565::instance()->switch_connect( value.get(), rep );
+                        }
+                    }
+                }
+            }
+            
+            // boost::property_tree::write_json( std::cout, pt );
+        } catch ( std::exception& e ) {
+            log() << boost::diagnostic_information( e );
+        } 
+        
     } else if ( request_path == "/dg/ctl?events" ) {
-
+        
         rep = "SSE";
         
     } else {

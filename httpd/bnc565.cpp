@@ -421,6 +421,7 @@ bnc565::initialize( const std::string& ttyname, int baud )
     }
 
     ttyname_ = ttyname;
+    baud_ = baud;
 
     usb_->async_reader( [=]( const char * send, std::size_t length ){ handle_receive( send, length ); } );
     usb_->start();
@@ -440,6 +441,18 @@ bnc565::initialize( const std::string& ttyname, int baud )
     peripheral_query_device_data( false );
 
     return true;
+}
+
+bool
+bnc565::switch_connect( bool onoff, std::string& reply )
+{
+    if ( ! usb_->is_open() )
+        initialize( ttyname_, baud_ );
+    if ( usb_->is_open() )
+        return _xsend( (boost::format(":PULSE0:STATE %1%\r\n") % (onoff ? "ON" : "OFF")).str().c_str(), reply, "ok", 10 );
+    else
+        reply = "Error";
+    return false;
 }
 
 bool
