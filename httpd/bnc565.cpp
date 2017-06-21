@@ -192,7 +192,7 @@ bnc565::fetch( dg::protocols<>& d )
         if ( _xsend( ":PULSE0:PER?\r\n", reply ) ) {
             if ( reply[0] != '?' ) {
                 try {
-                    d.setInterval( boost::lexical_cast<int>(reply) );
+                    d.setInterval( boost::lexical_cast<double>(reply) );
                 } catch ( std::exception& ex ) {
                     log( log::ERR ) << boost::format( "%1%:%2% %3% (%4%)" ) % __FILE__ % __LINE__ % ex.what() % reply;
                 }
