@@ -473,9 +473,12 @@ bnc565::switch_connect( bool onoff, std::string& reply )
             reply = ( boost::format( "Error: %1% for tty device '%2%'; " ) % usb_->error_code() % ttyname_ ).str();
     }
     std::string rep;
-    bool res = _xsend( (boost::format(":PULSE0:STATE %1%\r\n") % (onoff ? "ON" : "OFF")).str().c_str(), rep, "ok", 10 );
-    reply += rep;
-    return res;
+    if ( bool res = _xsend( (boost::format(":PULSE0:STATE %1%\r\n") % (onoff ? "ON" : "OFF")).str().c_str(), rep, "ok", 10 ) ) {
+        protocols_.setState( onoff );
+        reply += rep;
+        return true;
+    }
+    return false;
 }
 
 bool
