@@ -186,7 +186,7 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
 {
     std::ostringstream o;
 
-    std::cout << __FILE__ << __LINE__ << "http_request: " << method << " : " << request_path << std::endl;
+    // std::cout << __FILE__ << __LINE__ << "http_request: " << method << " : " << request_path << std::endl;
 
     if ( request_path == "/dg/ctl?banner" ) {
 
@@ -210,7 +210,7 @@ dgctl::http_request( const std::string& method, const std::string& request_path,
         try {
             if ( dg::protocols<>::read_json( payload, protocols ) ) {
 
-                dg::protocols<>::write_json( std::cout, protocols );
+                // dg::protocols<>::write_json( std::cout, protocols );
 
                 bnc565::instance()->commit( protocols );
                 o << "COMMIT SUCCESS; " << ( is_active() ? "(trigger is active)" : ( "trigger is not active" ) );

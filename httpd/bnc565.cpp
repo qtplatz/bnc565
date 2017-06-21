@@ -139,6 +139,8 @@ bnc565::commit( const dg::protocols<>& d )
     std::string reply;
 
     // dg::protocols<>::write_json( std::cout, d );
+
+    _xsend( (boost::format(":PULSE0:PER %1%\r\n") % d.interval() ).str().c_str(), reply, "ok", 10 );
     
     for ( int ch = 1; ch <= p.size; ++ch ) {
         
@@ -448,13 +450,14 @@ bnc565::initialize( const std::string& ttyname, int baud )
 bool
 bnc565::switch_connect( bool onoff, std::string& reply )
 {
-    if ( ! usb_->is_open() )
-        initialize( ttyname_, baud_ );
-    if ( usb_->is_open() )
-        return _xsend( (boost::format(":PULSE0:STATE %1%\r\n") % (onoff ? "ON" : "OFF")).str().c_str(), reply, "ok", 10 );
-    else
-        reply = "Error";
-    return false;
+    if ( ! usb_->is_open() ) {
+        if ( ! initialize( ttyname_, baud_ ) )
+            reply = ( boost::format( "Error: %1% for tty device '%2%'; " ) % usb_->error_code() % ttyname_ ).str();
+    }
+    std::string rep;
+    bool res = _xsend( (boost::format(":PULSE0:STATE %1%\r\n") % (onoff ? "ON" : "OFF")).str().c_str(), rep, "ok", 10 );
+    reply += rep;
+    return res;
 }
 
 bool
