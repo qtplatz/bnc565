@@ -71,16 +71,20 @@ install( FILES ${DEPENDENT_LIBRARIES} DESTINATION bin COMPONENT applications )
 
 ######## CPack
 #
-#if( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
-#
-#  set( CPACK_GENERATOR DEB )
-#  set( CPACK_DEB_COMPONENT_INSTALL 1 )
-#  set( CPACK_DEBIAN_PACKAGE_MAINTAINER "T. Hondo <toshi.hondo@qtplatz.com>" )
-#  set( HTTPD_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/httpd" )
-#  set( CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${HTTPD_BINARY_DIR}/postinst;${HTTPD_BINARY_DIR}/prerm" )  
-#  set( CPACK_DEBIAN_HTTPD_PACKAGE_CONTROL_EXTRA "${HTTPD_BINARY_DIR}/postinst;${HTTPD_BINARY_DIR}/prerm" )
-#  set( CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${__arch} )
-# endif()
+set( CPACK_PACKAGE_NAME bnc565 )
+#cpack_add_component( httpd DISPLAY_NAME "BNC565 control web server" DESCRIPTION "web server" GROUP httpd )
 
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
+
+  set( CPACK_GENERATOR DEB )
+  set( CPACK_DEB_COMPONENT_INSTALL 1 )
+  set( CPACK_DEBIAN_PACKAGE_MAINTAINER "T. Hondo <toshi.hondo@qtplatz.com>" )
+  set( HTTPD_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/httpd" )
+  set( CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${HTTPD_BINARY_DIR}/postinst;${HTTPD_BINARY_DIR}/prerm" )  
+  set( CPACK_DEBIAN_HTTPD_PACKAGE_CONTROL_EXTRA "${HTTPD_BINARY_DIR}/postinst;${HTTPD_BINARY_DIR}/prerm" )
+  set( CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${__arch} )
+endif()
+
+include( CPack )
 #include( qtplatz-cpack-config )
 #cpack_add_component( httpd DISPLAY_NAME "Delay pulse controller" DESCRIPTION "web server" GROUP httpd )
